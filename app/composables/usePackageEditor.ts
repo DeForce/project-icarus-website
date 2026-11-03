@@ -27,6 +27,7 @@ export function usePackageEditor(packageId: string) {
   const saving = ref(false)
   const conflict = ref(false)
   const publicationProblems = ref<Array<{ path: string; message: string }>>([])
+  const unpublishBlockers = ref<Array<{ id: string; title: string }>>([])
 
   const isDraft = computed(() => detail.value?.status === 'draft')
   const revision = computed(() => detail.value?.revision ?? 0)
@@ -66,6 +67,11 @@ export function usePackageEditor(packageId: string) {
 
   function isConflict(error: unknown): boolean {
     return typeof error === 'object' && error !== null && 'statusCode' in error && error.statusCode === 409
+  }
+
+  /** ofetch exposes the parsed error body on `error.data`; h3 nests the payload one level deeper. */
+  function errorPayload<T>(error: unknown): T | undefined {
+    return (error as { data?: { data?: T } }).data?.data
   }
 
   async function saveMetadata(fields: { title: string; receivedDate: string; publicSummary: string | null }) {
@@ -132,9 +138,40 @@ export function usePackageEditor(packageId: string) {
   }
 
   async function capturePublicationError(error: unknown): Promise<void> {
-    if (typeof error === 'object' && error !== null && 'statusCode' in error && error.statusCode === 422) {
-      const data = (error as { data?: { problems?: Array<{ path: string; message: string }> } }).data
-      publicationProblems.value = data?.problems ?? []
+    const payload = errorPayload<{ problems?: Array<{ path: string; message: string }> }>(error)
+    publicationProblems.value = payload?.problems ?? []
+  }
+
+  /**
+   * Reverts a published package to draft. Implemented outside `run` on purpose: a blocked unpublish
+   * is also a 409, but carries `data.blockers` and must surface the blocking packages instead of the
+   * generic revision-conflict reload.
+   */
+  async function unpublish(): Promise<boolean> {
+    unpublishBlockers.value = []
+    saving.value = true
+    conflict.value = false
+    try {
+      await ofetch(`${packageUrl}/unpublish`, {
+        method: 'POST',
+        body: { expectedPackageRevision: revision.value },
+      })
+      await load()
+      return true
+    } catch (error) {
+      if (isConflict(error)) {
+        const blockers = errorPayload<{ blockers?: Array<{ id: string; title: string }> }>(error)?.blockers
+        if (blockers) {
+          unpublishBlockers.value = blockers
+        } else {
+          conflict.value = true
+          await load()
+        }
+        return false
+      }
+      throw error
+    } finally {
+      saving.value = false
     }
   }
 
@@ -154,5 +191,7 @@ export function usePackageEditor(packageId: string) {
     checkReferences,
     publish,
     capturePublicationError,
+    unpublish,
+    unpublishBlockers,
   }
 }

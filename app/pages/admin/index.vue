@@ -88,7 +88,7 @@ async function loadPackages() {
 }
 
 function packageTo(packageInfo: PackageInfo): string {
-  return packageInfo.status === 'draft' ? `/admin/packages/${packageInfo.id}` : `/packages/${packageInfo.id}`
+  return `/admin/packages/${packageInfo.id}`
 }
 
 // --- Draft creation ----------------------------------------------------------

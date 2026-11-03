@@ -8,7 +8,7 @@ const { t } = useI18n()
 
 const packageId = route.params.id as string
 const editor = usePackageEditor(packageId)
-const { detail, saving, conflict, isDraft, publicationProblems } = editor
+const { detail, saving, conflict, isDraft, publicationProblems, unpublishBlockers } = editor
 
 const { data: session, pending: sessionPending } = useFetch('/api/admin/session', {
   default: () => ({ authenticated: false }),
@@ -130,6 +130,11 @@ async function onPublish() {
   }
 }
 
+async function onUnpublish() {
+  if (!window.confirm(t('editor.unpublishConfirm'))) return
+  await editor.unpublish()
+}
+
 function reloadAfterConflict() {
   conflict.value = false
   metadataDirty.value = false
@@ -238,6 +243,17 @@ onMounted(() => {
       <template v-else>
         <p class="terminal-dim">{{ t('editor.publishedView') }}</p>
         <NuxtLink class="terminal-button" :to="`/packages/${packageId}`">{{ t('packages.heading') }}</NuxtLink>
+        <div class="form-actions">
+          <button type="button" class="terminal-button terminal-button-ghost" :disabled="saving" @click="onUnpublish">
+            {{ t('editor.unpublish') }}
+          </button>
+        </div>
+        <div v-if="unpublishBlockers.length > 0" class="problem-list">
+          <p class="terminal-error">{{ t('editor.unpublishBlocked') }}</p>
+          <ul>
+            <li v-for="blocker in unpublishBlockers" :key="blocker.id">{{ blocker.title }}</li>
+          </ul>
+        </div>
       </template>
     </template>
     <p v-else-if="editor.loadError.value" class="terminal-error">{{ t('editor.notFound') }}</p>

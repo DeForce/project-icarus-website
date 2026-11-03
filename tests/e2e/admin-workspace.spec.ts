@@ -186,4 +186,81 @@ test.describe('administrator workspace', () => {
     await page.locator('.admin-change-list li', { hasText: 'Тау Кита' }).getByRole('button', { name: 'Редактировать' }).click()
     await expect(population).toHaveValue(/10\s000\s000/)
   })
+
+  test('unpublish is blocked while a later published package references its entity', async ({ page }) => {
+    await login(page)
+    page.on('dialog', (dialog) => void dialog.accept())
+    const suffix = `u${Date.now()}`
+
+    const firstId = await createDraft(page, { title: `Отмена А ${suffix}`, receivedDate: '2061-01-01' })
+    const changeEditor = page.locator('.change-editor')
+    await page.getByRole('button', { name: 'Добавить изменение' }).click()
+    await changeEditor.getByLabel('Название').fill(`Категория ${suffix}`)
+    await changeEditor.getByRole('button', { name: 'Сохранить' }).click()
+
+    await page.getByRole('button', { name: 'Добавить изменение' }).click()
+    await changeEditor.locator('select').first().selectOption({ label: 'Статья' })
+    await changeEditor.getByLabel('Заголовок').fill(`Статья ${suffix}`)
+    await changeEditor.getByLabel('Текст (Markdown)').fill(`# Статья ${suffix}`)
+    const categoryField = changeEditor.locator('.field', { has: page.getByText('Категория', { exact: true }) })
+    await categoryField.locator('input').click()
+    await categoryField.getByRole('button', { name: `Категория ${suffix}` }).click()
+    await changeEditor.getByRole('button', { name: 'Сохранить' }).click()
+    await page.getByRole('button', { name: 'Опубликовать' }).click()
+    await expect(page).toHaveURL(new RegExp(`/packages/${firstId}$`))
+
+    await page.goto('/admin')
+    await createDraft(page, { title: `Отмена Б ${suffix}`, receivedDate: '2061-01-02' })
+    await page.getByRole('button', { name: 'Добавить изменение' }).click()
+    await changeEditor.locator('select').first().selectOption({ label: 'Статья' })
+    await changeEditor.getByLabel('Заголовок').fill(`Связанная ${suffix}`)
+    await changeEditor.getByLabel('Текст (Markdown)').fill(`# Связанная ${suffix}`)
+    const categoryFieldB = changeEditor.locator('.field', { has: page.getByText('Категория', { exact: true }) })
+    await categoryFieldB.locator('input').click()
+    await categoryFieldB.getByRole('button', { name: `Категория ${suffix}` }).click()
+    const relatedField = changeEditor.locator('.field', { has: page.getByText('Связанные статьи') })
+    await relatedField.locator('input').click()
+    await relatedField.getByRole('button', { name: `Статья ${suffix}` }).click()
+    await changeEditor.getByRole('button', { name: 'Сохранить' }).click()
+    await page.getByRole('button', { name: 'Опубликовать' }).click()
+
+    await page.goto(`/admin/packages/${firstId}`)
+    await page.getByRole('button', { name: 'Вернуть в черновик' }).click()
+    await expect(page.getByText('Возврат в черновик невозможен')).toBeVisible()
+    await expect(page.locator('.problem-list li', { hasText: `Отмена Б ${suffix}` })).toBeVisible()
+  })
+
+  test('reverting a package to draft removes it from the public journal until republished', async ({ page, browser }) => {
+    await login(page)
+    page.on('dialog', (dialog) => void dialog.accept())
+    const suffix = `r${Date.now()}`
+
+    const packageId = await createDraft(page, { title: `Возврат ${suffix}`, receivedDate: '2061-01-01' })
+    const changeEditor = page.locator('.change-editor')
+    await page.getByRole('button', { name: 'Добавить изменение' }).click()
+    await changeEditor.getByLabel('Название').fill(`Категория возврата ${suffix}`)
+    await changeEditor.getByRole('button', { name: 'Сохранить' }).click()
+    await page.getByRole('button', { name: 'Опубликовать' }).click()
+    await expect(page).toHaveURL(new RegExp(`/packages/${packageId}$`))
+
+    const anon = await browser.newPage()
+    await anon.goto('/packages')
+    await expect(anon.locator('.package-list-link', { hasText: `Возврат ${suffix}` })).toBeVisible()
+
+    await page.goto(`/admin/packages/${packageId}`)
+    await page.getByRole('button', { name: 'Вернуть в черновик' }).click()
+    await expect(page.getByText(/черновик · Ревизия/)).toBeVisible()
+
+    await anon.reload()
+    await expect(anon.locator('.package-list-link', { hasText: `Возврат ${suffix}` })).toHaveCount(0)
+    await anon.close()
+
+    // The reverted draft is editable and republishes back into the journal.
+    const titleInput = page.getByLabel('Заголовок')
+    await fillWhenHydrated(page, titleInput, `Возврат исправленный ${suffix}`)
+    await page.getByRole('button', { name: 'Сохранить' }).click()
+    await expect(page.getByText('Есть несохранённые изменения.')).toBeHidden()
+    await page.getByRole('button', { name: 'Опубликовать' }).click()
+    await expect(page).toHaveURL(new RegExp(`/packages/${packageId}$`))
+  })
 })
