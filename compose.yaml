@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: icarus-terminal:local
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_PATH: /data/db/icarus.sqlite
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME must be set (root .env)}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set (root .env)}
+      ADMIN_COOKIE_SECURE: ${ADMIN_COOKIE_SECURE:-false}
+    volumes:
+      - ./db:/data/db
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/api/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped

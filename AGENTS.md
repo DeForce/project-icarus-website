@@ -10,4 +10,4 @@
 - Number specifications and plans with one shared, globally increasing four-digit feature ID before the date: `NNNN-YYYY-MM-DD-topic[-design].md`. Use `npm run docs:new -- topic` for new pairs. Do not renumber existing IDs.
 - Complete the plan, run its checks, record real verification and remaining limitations, then create an English Conventional Commit for that completed plan. The user has authorized this policy. Do not push, publish or create branches without a separate request.
 - Never edit, import automatically or include `obsidian/` in Git/build contexts. Keep secrets, live SQLite files and test artifacts out of Git.
-- Keep local development/testing independent of Docker. Preserve `db/` as the Compose bind mount; Caddy serves HTTP only.
+- Keep local development/testing independent of Docker. Preserve `db/` as the Compose bind mount; the root Compose setup serves HTTP directly on port 3000 (no reverse proxy in the deployment).

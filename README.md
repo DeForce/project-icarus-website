@@ -28,21 +28,21 @@
 
 ## Деплой (Docker Compose)
 
-Локальная разработка и тесты Docker не требуют. Деплой — два контейнера: Nuxt SSR (внутренний порт 3000, health-check `/api/health`) и Caddy по HTTP (TLS снаружи). База — bind mount репозиторного каталога `db/` в `/data/db`; миграции применяются автоматически при старте приложения.
+Локальная разработка и тесты Docker не требуют. Деплой — один контейнер с Nuxt SSR: HTTP напрямую на порту 3000, health-check `/api/health`. База — bind mount репозиторного каталога `db/` в `/data/db`; миграции применяются автоматически при старте приложения.
 
 ```bash
-cp .env.example docker/.env   # задать ADMIN_USERNAME / ADMIN_PASSWORD
-docker compose -f docker/compose.yaml up -d --build
+cp .env.example .env   # задать ADMIN_USERNAME / ADMIN_PASSWORD (тот же .env, что и для локальной разработки)
+docker compose up -d --build
 ```
 
 - **Одноразовый шаг на Linux**: каталог `db/` должен принадлежать пользователю контейнера (uid/gid 100, пользователь `icarus`): `mkdir -p db && sudo chown -R 100:100 db`. Без этого не-root контейнер не сможет писать в базу.
 - **Windows Desktop**: шаг с `chown` не нужен — bind mount работает через виртуальную машину и прав доступа Windows.
-- Переменные в `docker/.env` интерполируются Compose при старте; `ADMIN_COOKIE_SECURE=true` ставить только при внешнем HTTPS-терминаторе.
+- Compose подхватывает корневой `.env`; `DATABASE_PATH` внутри контейнера зафиксирован на `/data/db/icarus.sqlite` явно. `ADMIN_COOKIE_SECURE=true` ставить только при внешнем HTTPS-прокси перед контейнером.
 - Бэкап вне Docker: `npm run db:backup` копирует настроенную базу (read-only, включая незакоммиченный WAL) в `backups/` с меткой времени; автопрочистки нет — старые копии удаляются вручную. Восстановление: остановить приложение и подменить файл базы копией из `backups/`.
 
 ## Согласованный стек
 
-Nuxt (Vue 3, TypeScript, SSR), Reka UI (headless-компоненты), @nuxtjs/i18n (одна русская локаль), markdown-it, Nitro, Three.js, SQLite и Drizzle ORM (официальный мигратор и Drizzle Kit). База лежит в `db/` как Compose bind mount (`./db:/data/db`); локальная разработка и тестирование не зависят от Docker. Деплой — Docker Compose с Caddy по HTTP. Вход администратора настраивается серверными переменными окружения; базы и секреты не входят в Git.
+Nuxt (Vue 3, TypeScript, SSR), Reka UI (headless-компоненты), @nuxtjs/i18n (одна русская локаль), markdown-it, Nitro, Three.js, SQLite и Drizzle ORM (официальный мигратор и Drizzle Kit). База лежит в `db/` как Compose bind mount (`./db:/data/db`); локальная разработка и тестирование не зависят от Docker. Деплой — один контейнер через Docker Compose, HTTP на порту 3000. Вход администратора настраивается серверными переменными окружения; базы и секреты не входят в Git.
 
 ## Документы
 
