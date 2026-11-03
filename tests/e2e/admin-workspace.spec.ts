@@ -134,6 +134,18 @@ test.describe('administrator workspace', () => {
     await expect(page.getByRole('heading', { name: 'Переименованный архив' })).toBeVisible()
   })
 
+  test('import preview renders validation problems for an invalid document', async ({ page }) => {
+    await login(page)
+    await page.goto('/admin/import')
+
+    const brokenYaml = EXAMPLE_YAML.replace('  title: Пример архива экспедиции', '  title: Пример архива экспедиции\n  bogusField: 1')
+    await fillWhenHydrated(page, page.getByLabel('Текст YAML'), brokenYaml)
+    await page.getByRole('button', { name: 'Показать превью' }).click()
+
+    await expect(page.locator('.problem-list')).toBeVisible()
+    await expect(page.locator('.problem-list')).toContainText('bogusField')
+  })
+
   test('editor references draft entities: category picker, related articles, grouped population', async ({ page }) => {
     await login(page)
     await createDraft(page, { title: 'Пакет пикеров', receivedDate: '2061-01-07' })

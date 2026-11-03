@@ -60,8 +60,9 @@ async function requestPreview() {
 
 function captureProblems(error: unknown) {
   if (typeof error === 'object' && error !== null && 'statusCode' in error && error.statusCode === 422) {
-    const data = (error as { data?: { problems?: Array<{ path: string; message: string }> } }).data
-    problems.value = data?.problems ?? []
+    // ofetch exposes the parsed h3 error body on `error.data`; the problems payload nests one level deeper.
+    const payload = (error as { data?: { data?: { problems?: Array<{ path: string; message: string }> } } }).data?.data
+    problems.value = payload?.problems ?? []
   }
 }
 
