@@ -284,7 +284,7 @@ export function unpublishPackage(db: TerminalDatabase, packageId: string, expect
         })
         .from(packageChanges)
         .innerJoin(informationPackages, eq(packageChanges.packageId, informationPackages.id))
-        .where(and(eq(informationPackages.status, 'published'), gt(informationPackages.sequence, row.sequence)))
+        .where(and(eq(informationPackages.status, 'published'), gt(informationPackages.sequence, row.sequence ?? 0)))
         .all()
 
       const blockers = new Map<string, { id: string; title: string }>()
@@ -299,10 +299,7 @@ export function unpublishPackage(db: TerminalDatabase, packageId: string, expect
     }
 
     bumpExpectedRevision(tx, packageId, expectedRevision)
-    tx.update(informationPackages)
-      .set({ status: 'draft', publishedAt: null })
-      .where(eq(informationPackages.id, packageId))
-      .run()
+    tx.update(informationPackages).set({ status: 'draft', publishedAt: null }).where(eq(informationPackages.id, packageId)).run()
 
     return toPackageInfo(getPackageRow(db, packageId))
   })

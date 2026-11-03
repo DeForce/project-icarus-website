@@ -5,7 +5,7 @@ import { CampaignConflictError } from '../domain/campaign.ts'
 import { ImportParseError } from '../domain/import/parse.ts'
 import { PublishedPackageKeyError } from '../domain/import/plan.ts'
 import { ImportPlanError } from '../domain/import/service.ts'
-import { PackageConflictError, PublicationError } from '../domain/packages.ts'
+import { PackageConflictError, PublicationError, UnpublishBlockedError } from '../domain/packages.ts'
 
 export function sendSessionCookie(event: H3Event, token: string): void {
   setCookie(event, SESSION_COOKIE, token, {
@@ -25,6 +25,9 @@ export function clearSessionCookie(event: H3Event): void {
 export function handleDomainError(error: unknown): never {
   if (error instanceof PackageConflictError || error instanceof PublishedPackageKeyError || error instanceof CampaignConflictError) {
     throw createError({ statusCode: 409, statusMessage: error.message })
+  }
+  if (error instanceof UnpublishBlockedError) {
+    throw createError({ statusCode: 409, statusMessage: error.message, data: { blockers: error.blockers } })
   }
   if (error instanceof PublicationError) {
     throw createError({ statusCode: 422, statusMessage: error.message, data: { problems: error.problems } })
