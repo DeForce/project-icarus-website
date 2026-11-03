@@ -1,0 +1,67 @@
+version: 1
+
+package:
+  key: example-expedition-2061
+  title: Пример архива экспедиции
+  receivedDate: "2061-01-01"
+  effectiveDate: "2061-01-01"
+  source: Пример пакета — проверьте содержимое перед публикацией
+  publicSummary: Справочные материалы и пример картографических записей.
+
+categories:
+  - key: example-reference
+    name: Справочник
+    order: 0
+  - key: example-technologies
+    name: Технологии
+    parent: example-reference
+    order: 10
+
+articles:
+  - key: example-networks
+    category: example-technologies
+    title: Информационные сети
+    body: |
+      ## Бортовой архив
+
+      Корабельные терминалы подключены к центральному вычислительному комплексу.
+      Справочные документы хранятся на местных носителях.
+
+      Радиосвязь ограничена скоростью света. Записанные сведения также
+      доставляются курьерскими кораблями.
+    relatedArticles:
+      - example-navigation
+  - key: example-navigation
+    category: example-technologies
+    title: Навигационный пост
+    body: |
+      Для навигации применяются специализированные векторные дисплеи.
+      Подробные расчёты доступны через текстовые терминалы.
+
+systems:
+  - key: example-sol
+    name: Sol
+    astronomy:
+      designation: Sol
+      raDegrees: 0
+      decDegrees: 0
+      distancePc: 0
+      spectralType: G2V
+      catalogSource: Гелиоцентрическая система отсчёта
+      epoch: J2000.0
+    worldClass: central
+    article: example-navigation
+  - key: example-proxima
+    name: Proxima Centauri
+    description: Пример карточки без координат. Данные каталога требуется подготовить отдельно.
+
+routes:
+  - key: example-corridor
+    from: example-sol
+    to: example-proxima
+    type: experimental
+    status: unknown
+    direction: both
+    description: Пример формата маршрута, не утверждённый канон кампании.
+
+remove: []

@@ -1,0 +1,55 @@
+# ICARUS — корабельный информационный терминал
+
+Сайт сопровождения настольной кампании Genesys: публичный архив лора, звёздная карта и информационные пакеты для экипажа HMS Peregrine. Кампания начинается в 2061 году; будущие сведения публикуются ведущим по мере получения экипажем.
+
+## Статус
+
+Приложение переписано с нуля как единое Nuxt-приложение с SSR по плану 0007; все семь майлстоунов выполнены (scaffold, модель данных и публикация, YAML-импорт и демо-сид, аутентификация и публичные страницы, административный кабинет, звёздная карта, деплой и приёмка). Первая версия (Vue + NestJS) никогда не была задеплоена и удалена вместе со всеми старыми планами и спеками; сохранён только инструментарий репозитория.
+
+- [Спецификация переписывания](docs/superpowers/specs/0007-2026-11-03-nuxt-terminal-design.md)
+- [План реализации](docs/superpowers/plans/0007-2026-11-03-nuxt-terminal.md)
+
+## Команды
+
+Создать `.env` по примеру [.env.example](.env.example). Установка — `npm ci`.
+
+| Команда                                           | Назначение                                    |
+| ------------------------------------------------- | --------------------------------------------- |
+| `npm run dev`                                     | Локальный dev-сервер с watch                  |
+| `npm run build` / `npm run preview`               | Сборка / просмотр сборки                      |
+| `npm run typecheck`                               | Проверка типов (vue-tsc)                      |
+| `npm run format` / `npm run format:check`         | Форматирование Biome / проверка               |
+| `npm run lint` / `npm run lint:fix`               | Диагностика Biome / безопасные исправления    |
+| `npm run check`                                   | Lint, типы, unit-тесты и сборка               |
+| `npm run test:unit` / `npm run test:e2e`          | Unit-тесты (Vitest) / браузерные (Playwright) |
+| `npm run db:generate` / `db:migrate` / `db:check` | Drizzle Kit: миграции                         |
+| `npm run db:seed` / `db:backup`                   | Демо-сид / бэкап SQLite                       |
+| `npm run docs:new -- topic-slug`                  | Новая пара спецификация+план                  |
+
+## Деплой (Docker Compose)
+
+Локальная разработка и тесты Docker не требуют. Деплой — два контейнера: Nuxt SSR (внутренний порт 3000, health-check `/api/health`) и Caddy по HTTP (TLS снаружи). База — bind mount репозиторного каталога `db/` в `/data/db`; миграции применяются автоматически при старте приложения.
+
+```bash
+cp .env.example docker/.env   # задать ADMIN_USERNAME / ADMIN_PASSWORD
+docker compose -f docker/compose.yaml up -d --build
+```
+
+- **Одноразовый шаг на Linux**: каталог `db/` должен принадлежать пользователю контейнера (uid/gid 100, пользователь `icarus`): `mkdir -p db && sudo chown -R 100:100 db`. Без этого не-root контейнер не сможет писать в базу.
+- **Windows Desktop**: шаг с `chown` не нужен — bind mount работает через виртуальную машину и прав доступа Windows.
+- Переменные в `docker/.env` интерполируются Compose при старте; `ADMIN_COOKIE_SECURE=true` ставить только при внешнем HTTPS-терминаторе.
+- Бэкап вне Docker: `npm run db:backup` копирует настроенную базу (read-only, включая незакоммиченный WAL) в `backups/` с меткой времени; автопрочистки нет — старые копии удаляются вручную. Восстановление: остановить приложение и подменить файл базы копией из `backups/`.
+
+## Согласованный стек
+
+Nuxt (Vue 3, TypeScript, SSR), Reka UI (headless-компоненты), @nuxtjs/i18n (одна русская локаль), markdown-it, Nitro, Three.js, SQLite и Drizzle ORM (официальный мигратор и Drizzle Kit). База лежит в `db/` как Compose bind mount (`./db:/data/db`); локальная разработка и тестирование не зависят от Docker. Деплой — Docker Compose с Caddy по HTTP. Вход администратора настраивается серверными переменными окружения; базы и секреты не входят в Git.
+
+## Документы
+
+- Engineering standards: [CONTRIBUTING.md](CONTRIBUTING.md).
+- Инструментарий репозитория (Biome, Drizzle, процесс спецификаций/планов): [спецификация](docs/superpowers/specs/0003-2026-11-02-tooling-design.md) и [план](docs/superpowers/plans/0003-2026-11-02-tooling.md).
+- Индекс спецификаций и планов: [document index](docs/superpowers/README.md).
+
+## Справочные материалы
+
+`obsidian/` — отдельное локальное хранилище кампании со своим Git-репозиторием. В этот репозиторий оно не включается, в приложение автоматически не импортируется. Изменять его для разработки сайта не требуется.

@@ -1,0 +1,4 @@
+# HTTP-only reverse proxy; TLS is terminated by the externally managed deployment.
+:80 {
+	reverse_proxy app:3000
+}
