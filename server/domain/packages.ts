@@ -335,7 +335,6 @@ export function publishPackage(db: TerminalDatabase, packageId: string, expected
     const last = db
       .select({ sequence: informationPackages.sequence })
       .from(informationPackages)
-      .where(eq(informationPackages.status, 'published'))
       .orderBy(desc(informationPackages.sequence))
       .get()
 

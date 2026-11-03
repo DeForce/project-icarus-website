@@ -356,3 +356,32 @@ describe('unpublish', () => {
     expect(publishedThird.sequence).toBe(3)
   })
 })
+
+describe('publish sequence with reverted drafts', () => {
+  it('assigns fresh publishes above sequences retained by reverted drafts', () => {
+    ensureCampaign(connection.db)
+    const first = seedArticleDraft('First')
+    publishPackage(connection.db, first.draft.id, getPackageDetail(connection.db, first.draft.id).revision)
+
+    const second = createDraft(connection.db, { title: 'Second', receivedDate: '2061-01-02' })
+    upsertChange(connection.db, second.id, second.revision, {
+      kind: 'category',
+      payload: { name: 'Second category', parentId: null, order: 2 },
+    })
+    publishPackage(connection.db, second.id, getPackageDetail(connection.db, second.id).revision)
+
+    unpublishPackage(connection.db, first.draft.id, getPackageDetail(connection.db, first.draft.id).revision)
+    unpublishPackage(connection.db, second.id, getPackageDetail(connection.db, second.id).revision)
+
+    const third = createDraft(connection.db, { title: 'Third', receivedDate: '2061-01-03' })
+    upsertChange(connection.db, third.id, third.revision, {
+      kind: 'category',
+      payload: { name: 'Third category', parentId: null, order: 3 },
+    })
+    const publishedThird = publishPackage(connection.db, third.id, getPackageDetail(connection.db, third.id).revision)
+    expect(publishedThird.sequence).toBe(3)
+
+    const republishedFirst = publishPackage(connection.db, first.draft.id, getPackageDetail(connection.db, first.draft.id).revision)
+    expect(republishedFirst.sequence).toBe(1)
+  })
+})
