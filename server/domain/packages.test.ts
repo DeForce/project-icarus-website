@@ -67,6 +67,25 @@ describe('draft lifecycle', () => {
     expect(listPackages(connection.db).map((entry) => entry.id)).toContain(draft.id)
   })
 
+  it('lists published packages and drafts by received date, newest first', () => {
+    ensureCampaign(connection.db)
+    // 'Later received' is published FIRST so sequence order and received-date order disagree.
+    const lateReceived = createDraft(connection.db, { title: 'Late received', receivedDate: '2061-01-06' })
+    const earlyReceived = createDraft(connection.db, { title: 'Early received', receivedDate: '2061-01-02' })
+    const oldDraft = createDraft(connection.db, { title: 'Old draft', receivedDate: '2061-01-01' })
+    const newDraft = createDraft(connection.db, { title: 'New draft', receivedDate: '2061-01-05' })
+    for (const draft of [lateReceived, earlyReceived]) {
+      upsertChange(connection.db, draft.id, draft.revision, {
+        kind: 'category',
+        payload: { name: `Category ${draft.title}`, parentId: null, order: 1 },
+      })
+    }
+    publishPackage(connection.db, lateReceived.id, getPackageDetail(connection.db, lateReceived.id).revision)
+    publishPackage(connection.db, earlyReceived.id, getPackageDetail(connection.db, earlyReceived.id).revision)
+
+    expect(listPackages(connection.db).map((entry) => entry.title)).toEqual(['Late received', 'Early received', 'New draft', 'Old draft'])
+  })
+
   it('updates metadata, bumps the revision and rejects stale writes', () => {
     ensureCampaign(connection.db)
     const draft = createDraft(connection.db, { title: 'Draft', receivedDate: '2061-01-02' })

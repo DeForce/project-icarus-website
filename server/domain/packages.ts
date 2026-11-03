@@ -92,7 +92,7 @@ export function listPackages(db: TerminalDatabase): PackageInfo[] {
   return db
     .select()
     .from(informationPackages)
-    .orderBy(desc(informationPackages.status), desc(informationPackages.sequence), desc(informationPackages.receivedDate))
+    .orderBy(desc(informationPackages.status), desc(informationPackages.receivedDate))
     .all()
     .map(toPackageInfo)
 }
