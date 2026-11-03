@@ -14,6 +14,8 @@ import {
   PublicationError,
   publishPackage,
   removeChange,
+  UnpublishBlockedError,
+  unpublishPackage,
   updatePackageMetadata,
   upsertChange,
 } from './packages.ts'
@@ -256,5 +258,101 @@ describe('publication', () => {
 
     const withOverlay = projectSnapshot(connection.db, { draftPackageId: draft.id })
     expect(withOverlay.articles).toHaveLength(2)
+  })
+})
+
+describe('unpublish', () => {
+  it('reverts a published package to draft and hides it from the public projection', () => {
+    ensureCampaign(connection.db)
+    const { draft, articleId } = seedArticleDraft()
+    const published = publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+
+    const reverted = unpublishPackage(connection.db, draft.id, published.revision)
+
+    expect(reverted.status).toBe('draft')
+    expect(reverted.publishedAt).toBeNull()
+    expect(reverted.sequence).toBe(1)
+    expect(projectSnapshot(connection.db).articles.map((entry) => entry.id)).not.toContain(articleId)
+  })
+
+  it('rejects reverting a package that is not published', () => {
+    ensureCampaign(connection.db)
+    const { draft } = seedArticleDraft()
+    expect(() => unpublishPackage(connection.db, draft.id, draft.revision)).toThrow(PublicationError)
+  })
+
+  it('blocks the unpublish when a later published package references its entity', () => {
+    ensureCampaign(connection.db)
+    const { draft, articleId } = seedArticleDraft()
+    publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+
+    const second = createDraft(connection.db, { title: 'Follow-up', receivedDate: '2061-01-02' })
+    const { entityId: categoryId } = upsertChange(connection.db, second.id, second.revision, {
+      kind: 'category',
+      payload: { name: 'Logs', parentId: null, order: 2 },
+    })
+    upsertChange(connection.db, second.id, getPackageDetail(connection.db, second.id).revision, {
+      kind: 'article',
+      payload: { title: 'Related', categoryId, bodyMarkdown: '', relatedArticleIds: [articleId] },
+    })
+    const publishedSecond = publishPackage(connection.db, second.id, getPackageDetail(connection.db, second.id).revision)
+
+    let caught: unknown
+    try {
+      unpublishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+    } catch (error) {
+      caught = error
+    }
+
+    expect(caught).toBeInstanceOf(UnpublishBlockedError)
+    expect((caught as UnpublishBlockedError).blockers).toEqual([{ id: publishedSecond.id, title: 'Follow-up' }])
+    expect(getPackageDetail(connection.db, draft.id).status).toBe('published')
+  })
+
+  it('does not block when a later package only removes the entity', () => {
+    ensureCampaign(connection.db)
+    const { draft, articleId } = seedArticleDraft()
+    publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+
+    const second = createDraft(connection.db, { title: 'Removal', receivedDate: '2061-01-02' })
+    removeChange(connection.db, second.id, second.revision, articleId)
+    publishPackage(connection.db, second.id, getPackageDetail(connection.db, second.id).revision)
+
+    const reverted = unpublishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+    expect(reverted.status).toBe('draft')
+  })
+
+  it('rejects the unpublish on a revision conflict', () => {
+    ensureCampaign(connection.db)
+    const { draft } = seedArticleDraft()
+    const published = publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+
+    expect(() => unpublishPackage(connection.db, draft.id, published.revision - 1)).toThrow(PackageConflictError)
+    expect(getPackageDetail(connection.db, draft.id).status).toBe('published')
+  })
+
+  it('republish after unpublish keeps the original sequence', () => {
+    ensureCampaign(connection.db)
+    const { draft } = seedArticleDraft()
+    publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+
+    const second = createDraft(connection.db, { title: 'Two', receivedDate: '2061-01-02' })
+    upsertChange(connection.db, second.id, second.revision, {
+      kind: 'category',
+      payload: { name: 'Other', parentId: null, order: 2 },
+    })
+    publishPackage(connection.db, second.id, getPackageDetail(connection.db, second.id).revision)
+
+    unpublishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+    const republished = publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+    expect(republished.sequence).toBe(1)
+
+    const third = createDraft(connection.db, { title: 'Three', receivedDate: '2061-01-03' })
+    upsertChange(connection.db, third.id, third.revision, {
+      kind: 'category',
+      payload: { name: 'Third', parentId: null, order: 3 },
+    })
+    const publishedThird = publishPackage(connection.db, third.id, getPackageDetail(connection.db, third.id).revision)
+    expect(publishedThird.sequence).toBe(3)
   })
 })

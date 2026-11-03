@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, sql } from 'drizzle-orm'
 import type { ChangeRecord, EntityKind, EntityPayload, PackageInfo } from '../../shared/types.ts'
 import type { TerminalDatabase } from '../database/client.ts'
 import { entities, informationPackages, packageChanges } from '../database/schema.ts'
@@ -22,6 +22,17 @@ export class PublicationError extends Error {
     super(message)
     this.name = 'PublicationError'
     this.problems = problems
+  }
+}
+
+/** Thrown when reverting a published package would orphan references from later published packages; maps to HTTP 409. */
+export class UnpublishBlockedError extends Error {
+  readonly blockers: ReadonlyArray<{ id: string; title: string }>
+
+  constructor(blockers: ReadonlyArray<{ id: string; title: string }>) {
+    super('Later published packages reference entities of this package')
+    this.name = 'UnpublishBlockedError'
+    this.blockers = blockers
   }
 }
 
@@ -244,9 +255,75 @@ export function deleteDraft(db: TerminalDatabase, packageId: string, expectedRev
 }
 
 /**
+ * Reverts a published package to draft so it can be edited, deleted or republished.
+ * Blocked when a later published package's payload references an entity this package upserted:
+ * removing the upsert would leave the public archive dangling. Remove-only changes carry no
+ * payload references and do not block. The package keeps its sequence, so a republish regains
+ * its original journal place.
+ */
+export function unpublishPackage(db: TerminalDatabase, packageId: string, expectedRevision: number): PackageInfo {
+  return db.transaction((tx) => {
+    const row = getPackageRow(db, packageId)
+    if (row.status !== 'published') throw new PublicationError('Only a published package can be reverted to draft')
+    if (row.revision !== expectedRevision) throw new PackageConflictError()
+
+    const upserted = db
+      .select({ entityId: packageChanges.entityId })
+      .from(packageChanges)
+      .where(and(eq(packageChanges.packageId, packageId), eq(packageChanges.operation, 'upsert')))
+      .all()
+      .map((entry) => entry.entityId)
+    const upsertedIds = new Set(upserted)
+
+    if (upsertedIds.size > 0) {
+      const later = db
+        .select({
+          packageId: informationPackages.id,
+          title: informationPackages.title,
+          payloadJson: packageChanges.payloadJson,
+        })
+        .from(packageChanges)
+        .innerJoin(informationPackages, eq(packageChanges.packageId, informationPackages.id))
+        .where(and(eq(informationPackages.status, 'published'), gt(informationPackages.sequence, row.sequence)))
+        .all()
+
+      const blockers = new Map<string, { id: string; title: string }>()
+      for (const change of later) {
+        if (change.payloadJson === null) continue
+        const references = referencedIds(JSON.parse(change.payloadJson) as EntityPayload)
+        if (references.some((id) => upsertedIds.has(id))) {
+          blockers.set(change.packageId, { id: change.packageId, title: change.title })
+        }
+      }
+      if (blockers.size > 0) throw new UnpublishBlockedError([...blockers.values()])
+    }
+
+    bumpExpectedRevision(tx, packageId, expectedRevision)
+    tx.update(informationPackages)
+      .set({ status: 'draft', publishedAt: null })
+      .where(eq(informationPackages.id, packageId))
+      .run()
+
+    return toPackageInfo(getPackageRow(db, packageId))
+  })
+}
+
+/** Collects the entity ids a payload references, across all four entity kinds. */
+function referencedIds(payload: EntityPayload): string[] {
+  const references: string[] = []
+  if ('parentId' in payload && payload.parentId !== null) references.push(payload.parentId)
+  if ('categoryId' in payload) references.push(payload.categoryId)
+  if ('relatedArticleIds' in payload) references.push(...payload.relatedArticleIds)
+  if ('articleId' in payload && payload.articleId !== null) references.push(payload.articleId)
+  if ('fromSystemId' in payload) references.push(payload.fromSystemId)
+  if ('toSystemId' in payload) references.push(payload.toSystemId)
+  return references
+}
+/**
  * Publishes a draft atomically at any date: references are validated against the state visible as
  * of the package's own receivedDate, so every publicly visible snapshot stays self-consistent.
- * A published package becomes immutable and gets the next sequence number.
+ * A published package becomes immutable and gets the next sequence number; a republished package
+ * keeps the sequence it held before its unpublish.
  */
 export function publishPackage(db: TerminalDatabase, packageId: string, expectedRevision: number): PackageInfo {
   return db.transaction((tx) => {
@@ -269,7 +346,7 @@ export function publishPackage(db: TerminalDatabase, packageId: string, expected
       .set({
         status: 'published',
         publishedAt: new Date().toISOString(),
-        sequence: (last?.sequence ?? 0) + 1,
+        sequence: row.sequence ?? (last?.sequence ?? 0) + 1,
         revision: sql`${informationPackages.revision} + 1`,
       })
       .where(eq(informationPackages.id, packageId))
