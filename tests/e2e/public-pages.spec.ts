@@ -54,18 +54,22 @@ test.describe('public terminal pages', () => {
     await fillWhenHydrated(page, page.getByRole('searchbox'), '')
 
     const articles = page.locator('.archive-list-link')
-    await expect(articles).toHaveCount(5)
-    await expect(page.locator('.archive-result-line')).toContainText('Найдено: 5')
+    await expect(articles.first()).toBeVisible()
+    // The admin suite shares this database and publishes its own articles concurrently,
+    // so the total is dynamic; per-category counts of the seed data are deterministic.
+    const totalCount = await articles.count()
+    await expect(page.locator('.archive-result-line')).toContainText(`Найдено: ${totalCount}`)
 
     await page.locator('.archive-chips .chip', { hasText: 'Глоссарий' }).click()
     await expect(articles).toHaveCount(4)
+    await expect(page.locator('.archive-result-line')).toContainText('Найдено: 4')
 
     await page.locator('.archive-chips .chip', { hasText: 'Корабль' }).click()
     await expect(articles).toHaveCount(1)
     await expect(articles.first()).toContainText('Сведения о корабле')
 
     await page.locator('.archive-chips .chip').first().click()
-    await expect(articles).toHaveCount(5)
+    await expect(articles).toHaveCount(totalCount)
 
     await page.getByRole('combobox').click()
     await page.getByRole('option', { name: 'По названию А–Я' }).click()
