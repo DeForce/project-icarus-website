@@ -1,4 +1,4 @@
-import { and, asc, eq, lte, ne } from 'drizzle-orm'
+import { and, asc, eq, lte, ne, sql } from 'drizzle-orm'
 import type {
   ArticlePayload,
   CategoryPayload,
@@ -56,6 +56,32 @@ export function publishedReceivedDates(db: TerminalDatabase, asOfDate: string): 
     if (current === undefined || row.receivedDate < current) dates.set(row.entityId, row.receivedDate)
   }
   return dates
+}
+
+/**
+ * Ids of articles whose published payload contains the search text. LIKE wildcards in the
+ * search (`%`, `_`, `\`) are escaped and matched literally — a bare LIKE has no escape
+ * character on SQLite, so without the ESCAPE clause they would match almost everything.
+ */
+export function findArticleIdsByText(db: TerminalDatabase, asOfDate: string, search: string): Set<string> {
+  const escaped = search.replaceAll(/[\\%_]/g, (char) => `\\${char}`)
+  const pattern = `%${escaped}%`
+  const rows = db
+    .select({ entityId: packageChanges.entityId })
+    .from(packageChanges)
+    .innerJoin(informationPackages, eq(packageChanges.packageId, informationPackages.id))
+    .innerJoin(entities, eq(packageChanges.entityId, entities.id))
+    .where(
+      and(
+        eq(informationPackages.status, 'published'),
+        lte(informationPackages.receivedDate, asOfDate),
+        eq(entities.kind, 'article'),
+        eq(packageChanges.operation, 'upsert'),
+        sql`${packageChanges.payloadJson} LIKE ${pattern} ESCAPE '\\'`,
+      ),
+    )
+    .all()
+  return new Set(rows.map((row) => row.entityId))
 }
 
 const KIND_KEYS = {

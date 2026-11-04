@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мокап 1/3 — Фосфорный CRT</title>
+    <style>
+    /* ===== Мокап 1: «Фосфорный CRT» — честный зелёный терминал 80-х =====
+     Фишки: scanlines + свечение, мигающий курсор, массивные рамки, зелёный фосфор с янтарными акцентами. */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #050a06;
+      color: #3dff6e;
+      font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.5;
+      text-shadow: 0 0 6px rgba(61, 255, 110, 0.45);
+    }
+    /* scanlines + виньетка поверх всего */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 99;
+      background:
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px),
+        radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+    }
+    .amber {
+      color: #e8a33d;
+      text-shadow: 0 0 6px rgba(232, 163, 61, 0.45);
+    }
+    .dim {
+      color: #2a9e4f;
+      text-shadow: none;
+    }
+
+    .mock-banner {
+      padding: 10px 20px;
+      border-bottom: 2px solid #1d4a2a;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .frame-label {
+      margin: 24px 20px 8px;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    /* ---- оболочка терминала ---- */
+    .shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+      border: 2px solid #1d4a2a;
+      margin: 0 20px 40px;
+      background: #071008;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 16px;
+      align-items: baseline;
+      padding: 12px 20px;
+      border-bottom: 2px solid #1d4a2a;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    header .ship {
+      font-size: 13px;
+    }
+    header .title {
+      font-size: 20px;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 20px;
+      width: 100%;
+      margin-top: 8px;
+      text-transform: none;
+      letter-spacing: 0.04em;
+    }
+    nav a {
+      color: #2a9e4f;
+      text-decoration: none;
+    }
+    nav a:hover,
+    nav a.active {
+      color: #e8a33d;
+    }
+    nav a.active::before {
+      content: "[";
+    }
+    nav a.active::after {
+      content: "]";
+    }
+    nav .login {
+      margin-left: auto;
+    }
+    .cursor {
+      animation: blink 1.1s steps(1) infinite;
+    }
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .lead {
+      margin: 0 0 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .card {
+      border: 2px solid #1d4a2a;
+      padding: 16px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow:
+        inset 0 0 0 1px #050a06,
+        inset 0 0 0 2px #123a1e;
+    }
+    .card:hover {
+      border-color: #e8a33d;
+    }
+    .card-title {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .card-hint {
+      font-size: 14px;
+    }
+
+    article {
+      border: 2px solid #1d4a2a;
+      padding: 20px 24px;
+      box-shadow:
+        inset 0 0 0 1px #050a06,
+        inset 0 0 0 2px #123a1e;
+    }
+    article h2 {
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 20px 0 8px;
+    }
+    article h2:first-child {
+      margin-top: 0;
+    }
+    article p {
+      margin: 0 0 12px;
+    }
+    .meta {
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 20px;
+      border-top: 2px solid #1d4a2a;
+      font-size: 14px;
+    }
+    footer .svc {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    /* ---- мобильная рамка ---- */
+    .phone {
+      width: 390px;
+      max-width: calc(100% - 40px);
+      margin: 0 20px 40px;
+      border: 3px solid #2c2c2c;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #071008;
+    }
+    .phone .shell {
+      border: none;
+      margin: 0;
+      min-height: 640px;
+    }
+    .phone header {
+      padding: 10px 14px;
+    }
+    .phone header .title {
+      font-size: 16px;
+    }
+    .phone nav {
+      gap: 4px 12px;
+      font-size: 14px;
+    }
+    .phone nav .login {
+      margin-left: 0;
+    }
+    .phone main {
+      padding: 16px 14px;
+    }
+    .phone .grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .phone footer {
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="mock-banner">
+      Мокап 1/3 — «Фосфорный CRT» · честный зелёный терминал: scanlines, свечение, мигающий курсор<span class="cursor">█</span>
+    </div>
+
+    <div class="frame-label">Десктоп — Главная / Службы</div>
+    <div class="shell">
+      <header>
+        <span class="ship amber">HMS Peregrine</span>
+        <span class="title">ICARUS</span>
+        <nav>
+          <a href="#" class="active">Службы</a>
+          <a href="#">Архив</a>
+          <a href="#">Карта</a>
+          <a href="#">Пакеты</a>
+          <a href="#" class="login">Вход</a>
+        </nav>
+      </header>
+      <main>
+        <h1 class="amber">Службы корабля<span class="cursor">█</span></h1>
+        <p class="lead dim">Выберите раздел корабельного терминала.</p>
+        <div class="grid">
+          <a href="#" class="card">
+            <span class="card-title amber">Архив знаний</span>
+            <span class="card-hint dim">База данных: статьи, справочники и исследования экипажа.</span>
+          </a>
+          <a href="#" class="card">
+            <span class="card-title amber">Карта сектора</span>
+            <span class="card-hint dim">Звёздные системы и маршруты в пределах досягаемости.</span>
+          </a>
+          <a href="#" class="card">
+            <span class="card-title amber">Журнал пакетов</span>
+            <span class="card-hint dim">Хроника полученных информационных пакетов.</span>
+          </a>
+        </div>
+      </main>
+      <footer>
+        <span class="dim">Корабельный информационный терминал</span>
+        <span class="svc dim">Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="frame-label">Десктоп — Архив / Статья</div>
+    <div class="shell">
+      <header>
+        <span class="ship amber">HMS Peregrine</span>
+        <span class="title">ICARUS</span>
+        <nav>
+          <a href="#">Службы</a>
+          <a href="#" class="active">Архив</a>
+          <a href="#">Карта</a>
+          <a href="#">Пакеты</a>
+          <a href="#" class="login">Вход</a>
+        </nav>
+      </header>
+      <main>
+        <article>
+          <div class="meta dim">Проект Икар · Источник: Адмиралтейство — канцелярия проекта ICARUS · Получено 2061-01-03</div>
+          <h2 class="amber">III. Проект ICARUS — состояние на 2061 год</h2>
+          <p>
+            <b>Задача:</b> совершить первый свободный межзвёздный переход в LHS 1140 и основать постоянную опорную точку для последующих
+            экспедиций.
+          </p>
+          <p>Экспедиция состоит из двух судов.</p>
+          <p>
+            <b>Тяжёлый экспедиционный транспорт [название не закреплено]</b> доставляет колониальный персонал, промышленные запасы,
+            оборудование жизнеобеспечения и комплект для развёртывания метрического якоря.
+          </p>
+          <p>
+            <b>HMS<i>Peregrine</i></b> — малый военный эскорт и курьер с экспериментальной переходной установкой. Он обеспечивает
+            сопровождение и безопасность экспедиции. После подтверждения успешного развёртывания якоря обязан выполнить обратный переход в
+            Солнечную систему и доставить Адмиралтейству отчёт.
+          </p>
+          <p class="dim">Командир HMS Peregrine: лейтенант Виктория Перси, временно исполняющая обязанности лейтенант-коммандера…</p>
+        </article>
+      </main>
+      <footer>
+        <span class="dim">Корабельный информационный терминал</span>
+        <span class="svc dim">Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="frame-label">Мобильный (390px) — Главная</div>
+    <div class="phone">
+      <div class="shell">
+        <header>
+          <span class="ship amber">HMS Peregrine</span>
+          <span class="title">ICARUS</span>
+          <nav>
+            <a href="#" class="active">Службы</a>
+            <a href="#">Архив</a>
+            <a href="#">Карта</a>
+            <a href="#">Пакеты</a>
+            <a href="#">Вход</a>
+          </nav>
+        </header>
+        <main>
+          <h1 class="amber">Службы корабля</h1>
+          <p class="lead dim">Выберите раздел корабельного терминала.</p>
+          <div class="grid">
+            <a href="#" class="card">
+              <span class="card-title amber">Архив знаний</span>
+              <span class="card-hint dim">База данных: статьи, справочники и исследования экипажа.</span>
+            </a>
+            <a href="#" class="card">
+              <span class="card-title amber">Карта сектора</span>
+              <span class="card-hint dim">Звёздные системы и маршруты.</span>
+            </a>
+            <a href="#" class="card">
+              <span class="card-title amber">Журнал пакетов</span>
+              <span class="card-hint dim">Хроника информационных пакетов.</span>
+            </a>
+          </div>
+        </main>
+        <footer>
+          <span class="dim">Корабельный информационный терминал</span>
+          <span class="svc dim">Сервисный персонал</span>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

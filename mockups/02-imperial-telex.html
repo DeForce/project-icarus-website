@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мокап 2/3 — Имперский телекс</title>
+    <style>
+    /* ===== Мокап 2: «Имперский телекс» — бюрократия Британской Империи на экране =====
+     Фишки: канцелярская шапка с вензелем, «бумажные» документы на пергаменте с печатью,
+     латунь/чернила/сургуч, регистрационные номера, антиква для заголовков. */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #10151d;
+      color: #d8d2bd;
+      font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    .serif {
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    .brass {
+      color: #c9a227;
+    }
+    .dim {
+      color: #8d8871;
+    }
+    .seal-red {
+      color: #b0413e;
+    }
+
+    .mock-banner {
+      padding: 10px 20px;
+      border-bottom: 1px solid #3a3423;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .frame-label {
+      margin: 24px 20px 8px;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #8d8871;
+    }
+
+    /* ---- оболочка ---- */
+    .shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+      margin: 0 20px 40px;
+      border: 1px solid #3a3423;
+      background: #151b25;
+    }
+    header {
+      padding: 14px 24px 12px;
+      text-align: center;
+      border-bottom: 3px double #c9a227;
+      background: linear-gradient(180deg, #1a2230, #151b25);
+    }
+    .crown {
+      font-size: 22px;
+      color: #c9a227;
+    }
+    .ministry {
+      font-size: 12px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #8d8871;
+      margin-top: 2px;
+    }
+    .board {
+      font-size: 26px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #c9a227;
+      margin-top: 2px;
+    }
+    .ship-line {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #d8d2bd;
+      margin-top: 2px;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 24px;
+      justify-content: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid #3a3423;
+      font-size: 14px;
+    }
+    nav a {
+      color: #8d8871;
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+    nav a:hover,
+    nav a.active {
+      color: #c9a227;
+    }
+    nav a.active {
+      border-bottom: 2px solid #c9a227;
+      padding-bottom: 2px;
+    }
+    nav .login {
+      color: #6b6650;
+    }
+
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 20px;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #c9a227;
+    }
+    .lead {
+      margin: 0;
+      color: #8d8871;
+    }
+
+    /* карточки-службы как оглавление реестра */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 26px;
+    }
+    .card {
+      border: 1px solid #3a3423;
+      background: #1a2130;
+      padding: 18px 18px 14px;
+      text-decoration: none;
+      color: inherit;
+      border-top: 3px solid #c9a227;
+      position: relative;
+    }
+    .card:hover {
+      border-top-color: #b0413e;
+      background: #1d2536;
+    }
+    .card-no {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: #6b6650;
+    }
+    .card-title {
+      font-family: Georgia, serif;
+      font-size: 19px;
+      color: #c9a227;
+      margin-top: 4px;
+    }
+    .card-hint {
+      font-size: 14px;
+      color: #8d8871;
+      margin-top: 6px;
+    }
+    .card::after {
+      content: "→";
+      position: absolute;
+      right: 14px;
+      bottom: 10px;
+      color: #6b6650;
+    }
+
+    /* документ на пергаменте */
+    .document {
+      background: #ece3c8;
+      color: #22201a;
+      padding: 34px 40px 30px;
+      box-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.5),
+        inset 0 0 60px rgba(120, 100, 50, 0.18);
+      position: relative;
+    }
+    .document::before,
+    .document::after {
+      content: "";
+      position: absolute;
+      left: 40px;
+      right: 40px;
+      height: 1px;
+      background: rgba(60, 50, 30, 0.35);
+    }
+    .document::before {
+      top: 76px;
+    }
+    .document::after {
+      top: 112px;
+    }
+    .doc-head {
+      text-align: center;
+      margin-bottom: 22px;
+      position: relative;
+      z-index: 1;
+    }
+    .doc-head .serif {
+      font-size: 20px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .doc-reg {
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #5c5236;
+      margin-top: 4px;
+    }
+    .stamp {
+      position: absolute;
+      top: 18px;
+      right: 26px;
+      transform: rotate(8deg);
+      border: 3px double #b0413e;
+      color: #b0413e;
+      padding: 6px 12px;
+      font-size: 13px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      opacity: 0.85;
+    }
+    .document h2 {
+      font-family: Georgia, serif;
+      font-size: 18px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin: 22px 0 10px;
+    }
+    .document h2:first-of-type {
+      margin-top: 16px;
+    }
+    .document p {
+      margin: 0 0 12px;
+    }
+    .document .sig {
+      margin-top: 26px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #5c5236;
+    }
+    .rule {
+      border: none;
+      border-top: 1px solid rgba(60, 50, 30, 0.4);
+      margin: 18px 0;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 20px;
+      border-top: 1px solid #3a3423;
+      font-size: 13px;
+      color: #6b6650;
+    }
+
+    /* ---- мобильная рамка ---- */
+    .phone {
+      width: 390px;
+      max-width: calc(100% - 40px);
+      margin: 0 20px 40px;
+      border: 3px solid #2c2c2c;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #151b25;
+    }
+    .phone .shell {
+      border: none;
+      margin: 0;
+      min-height: 660px;
+    }
+    .phone .board {
+      font-size: 20px;
+    }
+    .phone nav {
+      gap: 4px 14px;
+      font-size: 13px;
+    }
+    .phone main {
+      padding: 18px 14px;
+    }
+    .phone .grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .phone .document {
+      padding: 22px 18px;
+    }
+    .phone .document::before,
+    .phone .document::after {
+      left: 18px;
+      right: 18px;
+    }
+    .phone .document::before {
+      top: 64px;
+    }
+    .phone .document::after {
+      top: 98px;
+    }
+    .phone .stamp {
+      top: 10px;
+      right: 10px;
+      font-size: 11px;
+      padding: 4px 8px;
+    }
+    .phone footer {
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="mock-banner">Мокап 2/3 — «Имперский телекс» · канцелярия Адмиралтейства: пергамент, латунь, сургучные печати</div>
+
+    <div class="frame-label">Десктоп — Главная / Службы</div>
+    <div class="shell">
+      <header>
+        <div class="crown">♛</div>
+        <div class="ministry serif">Британское Адмиралтейство</div>
+        <div class="board serif">ICARUS</div>
+        <div class="ship-line">HMS Peregrine · Корабельный информационный терминал</div>
+      </header>
+      <nav>
+        <a href="#" class="active">Службы</a>
+        <a href="#">Архив</a>
+        <a href="#">Карта</a>
+        <a href="#">Пакеты</a>
+        <a href="#" class="login">Вход</a>
+      </nav>
+      <main>
+        <h1 class="serif">Службы корабля</h1>
+        <p class="lead">Выберите раздел корабельного терминала.</p>
+        <div class="grid">
+          <a href="#" class="card">
+            <div class="card-no">РАЗДЕЛ I</div>
+            <div class="card-title">Архив знаний</div>
+            <div class="card-hint">База данных: статьи, справочники и исследования экипажа.</div>
+          </a>
+          <a href="#" class="card">
+            <div class="card-no">РАЗДЕЛ II</div>
+            <div class="card-title">Карта сектора</div>
+            <div class="card-hint">Звёздные системы и маршруты в пределах досягаемости.</div>
+          </a>
+          <a href="#" class="card">
+            <div class="card-no">РАЗДЕЛ III</div>
+            <div class="card-title">Журнал пакетов</div>
+            <div class="card-hint">Хроника полученных информационных пакетов.</div>
+          </a>
+        </div>
+      </main>
+      <footer>
+        <span>Корабельный информационный терминал</span>
+        <span>Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="frame-label">Десктоп — Архив / Документ</div>
+    <div class="shell">
+      <header>
+        <div class="crown">♛</div>
+        <div class="ministry serif">Британское Адмиралтейство</div>
+        <div class="board serif">ICARUS</div>
+        <div class="ship-line">HMS Peregrine · Корабельный информационный терминал</div>
+      </header>
+      <nav>
+        <a href="#">Службы</a>
+        <a href="#" class="active">Архив</a>
+        <a href="#">Карта</a>
+        <a href="#">Пакеты</a>
+        <a href="#" class="login">Вход</a>
+      </nav>
+      <main>
+        <div class="document">
+          <div class="stamp">Получено<br>2061-01-03</div>
+          <div class="doc-head">
+            <div class="serif">Проект ICARUS — состояние на 2061 год</div>
+            <div class="doc-reg">Канцелярия проекта ICARUS · Рег. № 1140/ИК · Раздел III</div>
+          </div>
+          <h2>Задача экспедиции</h2>
+          <p>Совершить первый свободный межзвёздный переход в LHS 1140 и основать постоянную опорную точку для последующих экспедиций.</p>
+          <p>Экспедиция состоит из двух судов.</p>
+          <p>
+            <b>Тяжёлый экспедиционный транспорт [название не закреплено]</b> доставляет колониальный персонал, промышленные запасы,
+            оборудование жизнеобеспечения и комплект для развёртывания метрического якоря.
+          </p>
+          <p>
+            <b>HMS<i>Peregrine</i></b> — малый военный эскорт и курьер с экспериментальной переходной установкой. Обеспечивает сопровождение
+            и безопасность экспедиции. После подтверждения успешного развёртывания якоря обязан выполнить обратный переход в Солнечную
+            систему и доставить Адмиралтейству отчёт.
+          </p>
+          <hr class="rule">
+          <p style="font-size:14px;color:#5c5236">
+            Командир HMS Peregrine: лейтенант Виктория Перси, временно исполняющая обязанности лейтенант-коммандера. Исход операции по
+            состоянию на момент старта: неизвестен.
+          </p>
+          <div class="sig">
+            <span>Составлено: канцелярия проекта</span>
+            <span>Экз. № 1 · HMS Peregrine</span>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <span>Корабельный информационный терминал</span>
+        <span>Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="frame-label">Мобильный (390px) — Документ</div>
+    <div class="phone">
+      <div class="shell">
+        <header>
+          <div class="crown">♛</div>
+          <div class="ministry serif">Британское Адмиралтейство</div>
+          <div class="board serif">ICARUS</div>
+          <div class="ship-line">HMS Peregrine</div>
+        </header>
+        <nav>
+          <a href="#">Службы</a>
+          <a href="#" class="active">Архив</a>
+          <a href="#">Карта</a>
+          <a href="#">Пакеты</a>
+          <a href="#" class="login">Вход</a>
+        </nav>
+        <main>
+          <div class="document">
+            <div class="stamp">Получено<br>2061-01-03</div>
+            <div class="doc-head">
+              <div class="serif">Проект ICARUS — состояние на 2061 год</div>
+              <div class="doc-reg">Канцелярия проекта · Рег. № 1140/ИК</div>
+            </div>
+            <h2>Задача экспедиции</h2>
+            <p>Совершить первый свободный межзвёздный переход в LHS 1140 и основать постоянную опорную точку для последующих экспедиций.</p>
+            <p>
+              <b>HMS<i>Peregrine</i></b> — малый военный эскорт и курьер с экспериментальной переходной установкой…
+            </p>
+            <div class="sig">
+              <span>Экз. № 1</span>
+              <span>HMS Peregrine</span>
+            </div>
+          </div>
+        </main>
+        <footer>
+          <span>Корабельный информационный терминал</span>
+          <span>Сервисный персонал</span>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

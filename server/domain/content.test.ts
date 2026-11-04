@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { TerminalConnection } from '../database/client.ts'
 import { createTestDatabase } from '../database/test-utils.ts'
 import { ensureCampaign } from './campaign.ts'
-import { publishedReceivedDates } from './content.ts'
+import { findArticleIdsByText, publishedReceivedDates } from './content.ts'
 import { createDraft, getPackageDetail, publishPackage, upsertChange } from './packages.ts'
 
 let connection: TerminalConnection
@@ -30,6 +30,29 @@ function publishWithArticle(title: string, receivedDate: string) {
   publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
   return { categoryId, articleId }
 }
+
+describe('findArticleIdsByText', () => {
+  it('treats LIKE special characters as literals', () => {
+    publishWithArticle('Other', '2061-01-02')
+    const special = publishWithArticle('Special', '2061-01-02')
+    const draft = createDraft(connection.db, { title: 'Special draft', receivedDate: '2061-01-03' })
+    const { entityId: specialBodyId } = upsertChange(connection.db, draft.id, draft.revision, {
+      kind: 'article',
+      payload: {
+        title: 'Special',
+        categoryId: special.categoryId,
+        bodyMarkdown: 'Скидка 50% по договору_42',
+        relatedArticleIds: [],
+      },
+    })
+    publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+
+    // Without an ESCAPE clause, `%` would match every payload and `_` would match JSON keys.
+    expect([...findArticleIdsByText(connection.db, '2061-01-06', '50%')]).toEqual([specialBodyId])
+    expect([...findArticleIdsByText(connection.db, '2061-01-06', '_42')]).toEqual([specialBodyId])
+    expect(findArticleIdsByText(connection.db, '2061-01-06', '%')).toEqual(new Set([specialBodyId]))
+  })
+})
 
 describe('publishedReceivedDates', () => {
   it('maps each article to the earliest published package receivedDate', () => {

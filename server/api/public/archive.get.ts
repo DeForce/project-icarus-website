@@ -1,8 +1,6 @@
-import { and, eq, like, lte } from 'drizzle-orm'
 import { defineEventHandler, getQuery } from 'h3'
-import { entities, informationPackages, packageChanges } from '../../database/schema.ts'
 import { getCampaign } from '../../domain/campaign.ts'
-import { projectSnapshot, publishedReceivedDates } from '../../domain/content.ts'
+import { findArticleIdsByText, projectSnapshot, publishedReceivedDates } from '../../domain/content.ts'
 import { type ArchiveDto, toArchiveDto } from '../../domain/public-dto.ts'
 import { getTerminal } from '../../utils/terminal-db.ts'
 
@@ -21,31 +19,7 @@ export default defineEventHandler((event): ArchiveDto => {
   const search = typeof query.search === 'string' ? query.search.trim() : ''
   if (search === '') return toArchiveDto(snapshot, receivedDates)
 
-  const pattern = `%${escapeLikePattern(search)}%`
-  const matchingArticleIds = new Set(
-    db
-      .select({ entityId: packageChanges.entityId })
-      .from(packageChanges)
-      .innerJoin(informationPackages, eq(packageChanges.packageId, informationPackages.id))
-      .innerJoin(entities, eq(packageChanges.entityId, entities.id))
-      .where(
-        and(
-          eq(informationPackages.status, 'published'),
-          // Packages published "into the future" stay invisible until their received date.
-          lte(informationPackages.receivedDate, currentDate),
-          eq(entities.kind, 'article'),
-          eq(packageChanges.operation, 'upsert'),
-          like(packageChanges.payloadJson, pattern),
-        ),
-      )
-      .all()
-      .map((row) => row.entityId),
-  )
-
+  const matchingArticleIds = findArticleIdsByText(db, currentDate, search)
   const archived = toArchiveDto(snapshot, receivedDates)
   return { ...archived, articles: archived.articles.filter((article) => matchingArticleIds.has(article.id)) }
 })
-
-function escapeLikePattern(value: string): string {
-  return value.replaceAll(/[\\%_]/g, (char) => `\\${char}`)
-}

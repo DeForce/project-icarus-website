@@ -15,6 +15,7 @@ test.describe('admin access', () => {
 
   test('admin login flow: form, session probe, logout', async ({ page }) => {
     await page.goto('/admin/login')
+    await expect(page.getByText('Канцелярия')).toBeVisible()
     await fillWhenHydrated(page, page.getByLabel('Имя пользователя'), 'admin')
     await fillWhenHydrated(page, page.getByLabel('Пароль'), 'test-password')
     await page.getByRole('button', { name: 'Войти' }).click()

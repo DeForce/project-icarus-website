@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ofetch } from 'ofetch'
 
+definePageMeta({ layout: 'admin' })
+
 const { t } = useI18n()
 const router = useRouter()
 

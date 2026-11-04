@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мокап 6 — Админка: телекс + QoL</title>
+    <style>
+    /* ===== Мокап 6: админская часть в стиле «02 внешне + 04 внутри» =====
+     Та же канцелярия, но служебная: приказы, дела, заверение. Плюс QoL:
+     статус-чипы, счётчики изменений, проблемы как «замечания канцелярии». */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #10151d;
+      color: #d8d2bd;
+      font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+    .serif {
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    .brass {
+      color: #c9a227;
+    }
+    .dim {
+      color: #8d8871;
+    }
+    .red {
+      color: #b0413e;
+    }
+
+    .mock-banner {
+      padding: 10px 20px;
+      border-bottom: 1px solid #3a3423;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #8d8871;
+    }
+    .frame-label {
+      margin: 24px 20px 8px;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #8d8871;
+    }
+
+    .shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 480px;
+      margin: 0 20px 40px;
+      border: 1px solid #3a3423;
+      background: #151b25;
+    }
+    header {
+      padding: 12px 24px 10px;
+      text-align: center;
+      border-bottom: 3px double #c9a227;
+      background: linear-gradient(180deg, #1a2230, #151b25);
+    }
+    .ministry {
+      font-size: 11px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #8d8871;
+    }
+    .board {
+      font-size: 21px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #c9a227;
+      margin-top: 2px;
+    }
+    .svc-line {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #6b6650;
+      margin-top: 2px;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 24px;
+      justify-content: center;
+      padding: 9px 20px;
+      border-bottom: 1px solid #3a3423;
+      font-size: 14px;
+    }
+    nav a {
+      color: #8d8871;
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      padding: 2px 8px;
+    }
+    nav a:hover {
+      color: #d8d2bd;
+    }
+    nav a.active {
+      color: #10151d;
+      background: #c9a227;
+    }
+    nav .login {
+      color: #6b6650;
+    }
+
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+    h1 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #c9a227;
+    }
+    h2 {
+      font-family: Georgia, serif;
+      font-size: 17px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #c9a227;
+      margin: 26px 0 10px;
+    }
+
+    /* кнопки-шнуровки канцелярии */
+    .btn {
+      display: inline-block;
+      border: 1px solid #c9a227;
+      color: #c9a227;
+      background: none;
+      font: inherit;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #c9a227;
+      color: #10151d;
+    }
+    .btn.primary {
+      background: #c9a227;
+      color: #10151d;
+    }
+    .btn.primary:hover {
+      background: #dbb53f;
+    }
+    .btn.danger {
+      border-color: #b0413e;
+      color: #b0413e;
+    }
+    .btn.danger:hover {
+      background: #b0413e;
+      color: #ece3c8;
+    }
+    .btn.ghost {
+      border-color: #3a3423;
+      color: #8d8871;
+    }
+    .btn.ghost:hover {
+      border-color: #c9a227;
+      color: #c9a227;
+      background: none;
+    }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }
+
+    /* панели */
+    .panel {
+      border: 1px solid #3a3423;
+      border-top: 3px solid #c9a227;
+      background: #1a2130;
+      padding: 16px 18px;
+      margin-bottom: 18px;
+    }
+    .panel.svc {
+      border-top-color: #8d8871;
+    }
+
+    /* формы */
+    .form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px 16px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+      color: #8d8871;
+      letter-spacing: 0.04em;
+    }
+    .field input,
+    .field textarea,
+    .field select {
+      border: 1px solid #3a3423;
+      background: #10151d;
+      color: #d8d2bd;
+      padding: 9px 11px;
+      font: inherit;
+    }
+    .field input:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: #c9a227;
+    }
+    .dirty-note {
+      font-size: 13px;
+      color: #c9a227;
+      margin: 10px 0 0;
+    }
+
+    /* список дел (пакетов) как выровненная таблица */
+    .tools {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .tools input[type="search"] {
+      flex: 1;
+      min-width: 200px;
+      border: 1px solid #3a3423;
+      background: #10151d;
+      color: #d8d2bd;
+      padding: 9px 11px;
+      font: inherit;
+    }
+    .pkg-table {
+      border: 1px solid #3a3423;
+      background: #1a2130;
+    }
+    .pkg-row,
+    .pkg-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 130px 190px 130px;
+      gap: 0 16px;
+      align-items: center;
+      padding: 11px 16px;
+    }
+    .pkg-head {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6b6650;
+      border-bottom: 1px solid #3a3423;
+      padding-top: 9px;
+      padding-bottom: 9px;
+    }
+    .pkg-row {
+      text-decoration: none;
+      color: inherit;
+      border-bottom: 1px solid #2a3140;
+      border-left: 4px solid #c9a227;
+    }
+    .pkg-row:last-child {
+      border-bottom: none;
+    }
+    .pkg-row:hover {
+      background: #232c3e;
+    }
+    .pkg-row .title {
+      font-size: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .pkg-row:hover .title {
+      color: #c9a227;
+    }
+    .pkg-row .meta {
+      font-size: 13px;
+      color: #8d8871;
+    }
+    .chip {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid;
+      padding: 3px 0;
+      text-align: center;
+      width: 100%;
+    }
+    .chip.draft {
+      color: #b0413e;
+      border-color: #b0413e;
+    }
+    .chip.pub {
+      color: #46c07a;
+      border-color: #46c07a;
+    }
+    .badge-count {
+      font-size: 13px;
+      color: #8d8871;
+    }
+
+    /* список изменений */
+    .change-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .change-list li {
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+      flex-wrap: wrap;
+      padding: 9px 4px;
+      border-bottom: 1px solid #2a3140;
+    }
+    .kind {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #10151d;
+      background: #8d8871;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+    .kind.article {
+      background: #c9a227;
+    }
+    .kind.system {
+      background: #6f88b0;
+    }
+    .kind.route {
+      background: #46c07a;
+    }
+    .op {
+      font-size: 12px;
+      color: #8d8871;
+    }
+    .op.add {
+      color: #46c07a;
+    }
+    .op.upd {
+      color: #c9a227;
+    }
+    .change-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    /* замечания канцелярии */
+    .problems {
+      border: 1px solid #b0413e;
+      background: rgba(176, 65, 62, 0.07);
+      padding: 14px 18px;
+      margin: 14px 0;
+    }
+    .problems b {
+      color: #b0413e;
+      font-weight: normal;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+    .problems ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      font-size: 14px;
+    }
+    .ok-line {
+      border: 1px solid #46c07a;
+      color: #46c07a;
+      padding: 12px 16px;
+      margin: 14px 0;
+      font-size: 14px;
+      letter-spacing: 0.04em;
+    }
+
+    textarea.yaml {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .sum-card {
+      border: 1px solid #3a3423;
+      padding: 10px 14px;
+    }
+    .sum-card b {
+      display: block;
+      font-size: 22px;
+      color: #c9a227;
+      font-weight: normal;
+    }
+    .sum-card span {
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #8d8871;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 20px;
+      border-top: 1px solid #3a3423;
+      font-size: 13px;
+      color: #6b6650;
+    }
+
+    /* на узком экране таблица дел складывается в карточку */
+    @media (max-width: 720px) {
+      .pkg-row,
+      .pkg-head {
+        grid-template-columns: 1fr auto;
+        row-gap: 6px;
+      }
+      .pkg-head {
+        display: none;
+      }
+      .pkg-row .title {
+        grid-column: 1 / -1;
+      }
+      .pkg-row .chip {
+        width: auto;
+        padding: 3px 10px;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <div class="mock-banner">Мокап 6 — Админка · служебная канцелярия: дела, приказы, заверение · статус-чипы и замечания</div>
+
+    <div class="frame-label">Десктоп — Пульт службы: настройки кампании + дела (пакеты)</div>
+    <div class="shell">
+      <header>
+        <div class="ministry serif">Британское Адмиралтейство · Служебный доступ</div>
+        <div class="board serif">ICARUS — Канцелярия</div>
+        <div class="svc-line">HMS Peregrine · Сервисный персонал</div>
+      </header>
+      <nav>
+        <a href="#" class="active">Дела</a>
+        <a href="#">Импорт YAML</a>
+        <a href="#" class="login">Выйти</a>
+      </nav>
+      <main>
+        <div class="actions">
+          <a class="btn ghost" href="#">Импорт YAML</a>
+          <button class="btn ghost" type="button">Выйти</button>
+        </div>
+
+        <div class="panel svc">
+          <h2 style="margin-top:0">Приказ о кампании</h2>
+          <div class="form">
+            <label class="field">
+              Название корабля
+              <input type="text" value="HMS Peregrine">
+            </label>
+            <label class="field">
+              Текущая дата кампании
+              <input type="date" value="2061-01-03">
+            </label>
+          </div>
+          <p class="dirty-note">Есть несохранённые изменения.</p>
+          <div class="actions">
+            <button class="btn primary" type="button">Сохранить приказ</button>
+            <button class="btn ghost" type="button">Отменить</button>
+          </div>
+        </div>
+
+        <div class="tools">
+          <input type="search" placeholder="Поиск по делам…">
+          <select>
+            <option>Все статусы</option>
+            <option>Черновики</option>
+            <option>Опубликованные</option>
+          </select>
+        </div>
+
+        <div class="pkg-table">
+          <div class="pkg-head">
+            <span>Название дела</span>
+            <span>Изменения</span>
+            <span>Статус</span>
+            <span>Получен</span>
+          </div>
+          <a class="pkg-row" href="#">
+            <span class="title">Проект Икар</span>
+            <span class="badge-count">6 изменений</span>
+            <span class="chip draft">Черновик</span>
+            <span class="meta">2061-01-03</span>
+          </a>
+          <a class="pkg-row" href="#">
+            <span class="title">История Империи</span>
+            <span class="badge-count">8 изменений</span>
+            <span class="chip pub">Опубликован · №1</span>
+            <span class="meta">2061-01-01</span>
+          </a>
+          <a class="pkg-row" href="#">
+            <span class="title">Имперский Астрографический Реестр</span>
+            <span class="badge-count">5 изменений</span>
+            <span class="chip draft">Черновик</span>
+            <span class="meta">2061-01-02</span>
+          </a>
+          <a class="pkg-row" href="#">
+            <span class="title">Демонстрационный пакет</span>
+            <span class="badge-count">3 изменения</span>
+            <span class="chip pub">Опубликован · №0</span>
+            <span class="meta">2060-12-30</span>
+          </a>
+        </div>
+
+        <h2>Завести новое дело</h2>
+        <div class="panel">
+          <div class="form">
+            <label class="field">
+              Название пакета
+              <input type="text" placeholder="Напр.: Донесения эскорта">
+            </label>
+            <label class="field">
+              Дата получения
+              <input type="date" value="2061-01-04">
+            </label>
+            <label class="field" style="grid-column:1/-1">
+              Публичное описание
+              <textarea rows="2" placeholder="Что увидят читатели терминала…"></textarea>
+            </label>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button">Завести дело</button>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <span>Корабельный информационный терминал · служебный режим</span>
+        <span>Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="frame-label">Десктоп — Дело: редактор пакета</div>
+    <div class="shell">
+      <header>
+        <div class="ministry serif">Британское Адмиралтейство · Служебный доступ</div>
+        <div class="board serif">ICARUS — Канцелярия</div>
+        <div class="svc-line">Дело: Проект Икар · Ревизия 4 ·<span class="red">Черновик</span></div>
+      </header>
+      <nav>
+        <a href="#">← К делам</a>
+        <a href="#" class="active">Редактор</a>
+        <a href="#" class="login">Выйти</a>
+      </nav>
+      <main>
+        <div class="panel">
+          <h2 style="margin-top:0">Метаданные</h2>
+          <div class="form">
+            <label class="field">
+              Название
+              <input type="text" value="Проект Икар">
+            </label>
+            <label class="field">
+              Дата получения
+              <input type="date" value="2061-01-03">
+            </label>
+            <label class="field">
+              Источник
+              <input type="text" value="Адмиралтейство — канцелярия проекта ICARUS">
+            </label>
+            <label class="field" style="grid-column:1/-1">
+              Публичное описание
+              <textarea rows="2">Официальные сведения Адмиралтейства о задачах и составе проекта…</textarea>
+            </label>
+          </div>
+        </div>
+
+        <h2>Изменения по реестру</h2>
+        <ul class="change-list">
+          <li>
+            <span class="kind article">Статья</span>
+            <span>icarus-status-2061</span>
+            <span class="op upd">изменение</span>
+            <span class="change-actions">
+              <a class="btn ghost" href="#" style="padding:3px 10px;font-size:12px">Править</a>
+              <button class="btn danger" type="button" style="padding:3px 10px;font-size:12px">Удалить</button>
+            </span>
+          </li>
+          <li>
+            <span class="kind article">Статья</span>
+            <span>icarus-peregrine</span>
+            <span class="op upd">изменение</span>
+            <span class="change-actions">
+              <a class="btn ghost" href="#" style="padding:3px 10px;font-size:12px">Править</a>
+              <button class="btn danger" type="button" style="padding:3px 10px;font-size:12px">Удалить</button>
+            </span>
+          </li>
+          <li>
+            <span class="kind article">Категория</span>
+            <span>icarus-project</span>
+            <span class="op upd">изменение</span>
+            <span class="change-actions">
+              <a class="btn ghost" href="#" style="padding:3px 10px;font-size:12px">Править</a>
+              <button class="btn danger" type="button" style="padding:3px 10px;font-size:12px">Удалить</button>
+            </span>
+          </li>
+        </ul>
+        <div class="actions">
+          <button class="btn" type="button">+ Добавить изменение</button>
+        </div>
+
+        <h2>Проверка и заверение</h2>
+        <div class="actions">
+          <button class="btn ghost" type="button">Проверить ссылки</button>
+          <span class="dim" style="font-size:13px;align-self:center">
+            Проверка проецирует изменения на состояние реестра на дату получения.
+          </span>
+        </div>
+        <div class="problems">
+          <b>Замечания канцелярии · 2</b>
+          <ul>
+            <li>Статья<b>icarus-status-2061</b> ссылается на несуществующую систему<b>lhs-1140</b>.</li>
+            <li>Маршрут<b>icarus-route</b>: конечная система не зафиксирована в реестре.</li>
+          </ul>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="button" disabled>Заверить и опубликовать</button>
+          <button class="btn danger" type="button">Уничтожить дело</button>
+          <span class="dim" style="font-size:13px;align-self:center">Публикация недоступна, пока есть замечания.</span>
+        </div>
+      </main>
+      <footer>
+        <span>Корабельный информационный терминал · служебный режим</span>
+        <span>Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="frame-label">Десктоп — Импорт YAML</div>
+    <div class="shell">
+      <header>
+        <div class="ministry serif">Британское Адмиралтейство · Служебный доступ</div>
+        <div class="board serif">ICARUS — Канцелярия</div>
+        <div class="svc-line">Приём пакета · формат v1</div>
+      </header>
+      <nav>
+        <a href="#">← К делам</a>
+        <a href="#" class="active">Импорт YAML</a>
+        <a href="#" class="login">Выйти</a>
+      </nav>
+      <main>
+        <h1>Импорт YAML</h1>
+        <div class="panel">
+          <label class="field" style="margin-bottom:10px">
+            Текст пакета (YAML v1)
+            <textarea class="yaml" spellcheck="false">version: 1
+package:
+  key: project-icarus
+  title: Проект Икар
+  receivedDate: "2061-01-03"
+  source: Адмиралтейство — канцелярия проекта ICARUS
+…</textarea>
+          </label>
+          <div class="actions">
+            <button class="btn" type="button">Проверить</button>
+            <button class="btn primary" type="button">Принять пакет</button>
+          </div>
+        </div>
+        <h2>Сводка проверки</h2>
+        <div class="summary-grid">
+          <div class="sum-card">
+            <b>2</b>
+            <span>Статьи</span>
+          </div>
+          <div class="sum-card">
+            <b>1</b>
+            <span>Категория</span>
+          </div>
+          <div class="sum-card">
+            <b>0</b>
+            <span>Системы</span>
+          </div>
+          <div class="sum-card">
+            <b>0</b>
+            <span>Маршруты</span>
+          </div>
+        </div>
+        <div class="ok-line">✔ Замечаний нет — пакет может быть принят в дела.</div>
+      </main>
+      <footer>
+        <span>Корабельный информационный терминал · служебный режим</span>
+        <span>Сервисный персонал</span>
+      </footer>
+    </div>
+  </body>
+</html>

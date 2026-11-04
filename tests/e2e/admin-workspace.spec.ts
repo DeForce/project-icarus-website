@@ -262,6 +262,7 @@ test.describe('administrator workspace', () => {
     await changeEditor.getByRole('button', { name: 'Сохранить' }).click()
     await page.getByRole('button', { name: 'Опубликовать' }).click()
     await expect(page).toHaveURL(new RegExp(`/packages/${packageId}$`))
+    await expect(page.locator('.toast-viewport')).toContainText('Дело заверено и опубликовано.')
 
     const anon = await browser.newPage()
     await anon.goto('/packages')

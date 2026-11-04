@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мокап 4/4 — Ретро-интерфейс, QoL 2026</title>
+    <style>
+    /* ===== Мокап 4: «Функционал 2026 — лицо 1985» =====
+     Всё удобство современного UI: живой поиск с подсветкой, фильтры-чипы, сортировка,
+     счётчик результатов, горячие клавиши, «хлебные крошки», понятные пустые состояния.
+     Подача — строгий фосфорный терминал: без анимаций, без теней, только цвет и сетка. */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #060a07;
+      color: #b9d8bb;
+      font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .amber {
+      color: #e8a33d;
+    }
+    .dim {
+      color: #6f9372;
+    }
+    mark {
+      background: #e8a33d;
+      color: #060a07;
+      padding: 0 1px;
+    }
+
+    .mock-banner {
+      padding: 10px 20px;
+      border-bottom: 1px solid #1d4a2a;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #6f9372;
+    }
+    .frame-label {
+      margin: 24px 20px 8px;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6f9372;
+    }
+
+    .shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 560px;
+      border: 1px solid #1d4a2a;
+      margin: 0 20px 40px;
+      background: #08110a;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 16px;
+      align-items: baseline;
+      padding: 12px 20px;
+      border-bottom: 1px solid #1d4a2a;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    header .ship {
+      font-size: 13px;
+    }
+    header .title {
+      font-size: 19px;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 18px;
+      width: 100%;
+      margin-top: 8px;
+      text-transform: none;
+      letter-spacing: 0.04em;
+      font-size: 15px;
+    }
+    nav a {
+      color: #6f9372;
+      text-decoration: none;
+      padding: 2px 6px;
+    }
+    nav a:hover {
+      color: #b9d8bb;
+    }
+    nav a.active {
+      color: #060a07;
+      background: #e8a33d;
+    }
+    nav .login {
+      margin-left: auto;
+    }
+
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 20px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ---- панель инструментов архива ---- */
+    .toolbar {
+      border: 1px solid #1d4a2a;
+      background: #0a150c;
+      padding: 14px 16px;
+      margin: 16px 0;
+    }
+    .search-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+    .search-wrap .kbd-hint {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: #6f9372;
+      border: 1px solid #1d4a2a;
+      padding: 1px 7px;
+    }
+    input[type="search"] {
+      width: 100%;
+      border: 1px solid #1d4a2a;
+      background: #060a07;
+      color: #b9d8bb;
+      padding: 10px 64px 10px 12px;
+      font: inherit;
+    }
+    input[type="search"]:focus {
+      outline: none;
+      border-color: #e8a33d;
+    }
+    select {
+      border: 1px solid #1d4a2a;
+      background: #060a07;
+      color: #b9d8bb;
+      padding: 10px 10px;
+      font: inherit;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    .chip {
+      border: 1px solid #1d4a2a;
+      color: #6f9372;
+      background: none;
+      font: inherit;
+      font-size: 13px;
+      padding: 4px 12px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+    .chip:hover {
+      color: #b9d8bb;
+      border-color: #3f7a4a;
+    }
+    .chip.on {
+      background: #e8a33d;
+      border-color: #e8a33d;
+      color: #060a07;
+    }
+    .result-line {
+      margin: 14px 0 6px;
+      font-size: 14px;
+      color: #6f9372;
+    }
+    .result-line b {
+      color: #e8a33d;
+      font-weight: normal;
+    }
+
+    /* ---- список результатов ---- */
+    .list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .list li {
+      border: 1px solid #1d4a2a;
+      border-top: none;
+    }
+    .list li:first-child {
+      border-top: 1px solid #1d4a2a;
+    }
+    .list a {
+      display: block;
+      padding: 12px 16px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .list a:hover,
+    .list a:focus {
+      background: #0d1a10;
+      box-shadow: inset 3px 0 0 #e8a33d;
+      outline: none;
+    }
+    .item-top {
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+    .item-title {
+      font-size: 17px;
+    }
+    .list a:hover .item-title {
+      color: #e8a33d;
+    }
+    .item-cat {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6f9372;
+      border: 1px solid #1d4a2a;
+      padding: 1px 8px;
+    }
+    .item-sum {
+      font-size: 14px;
+      color: #6f9372;
+      margin-top: 4px;
+    }
+    .item-date {
+      margin-left: auto;
+      font-size: 13px;
+      color: #6f9372;
+    }
+
+    .empty {
+      border: 1px dashed #1d4a2a;
+      padding: 28px 20px;
+      text-align: center;
+      color: #6f9372;
+    }
+    .empty b {
+      color: #b9d8bb;
+      font-weight: normal;
+    }
+
+    /* ---- статья: крошки + содержание ---- */
+    .crumbs {
+      font-size: 14px;
+      color: #6f9372;
+      margin: 4px 0 16px;
+    }
+    .crumbs a {
+      color: #6f9372;
+      text-decoration: none;
+    }
+    .crumbs a:hover {
+      color: #e8a33d;
+    }
+    article {
+      border: 1px solid #1d4a2a;
+      background: #0a150c;
+      padding: 24px 28px;
+    }
+    article h2 {
+      font-size: 15px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin: 18px 0 8px;
+    }
+    article h2:first-child {
+      margin-top: 0;
+    }
+    article p {
+      margin: 0 0 12px;
+    }
+    .meta {
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6f9372;
+      margin-bottom: 16px;
+    }
+    .related {
+      margin-top: 20px;
+      border: 1px solid #1d4a2a;
+      padding: 14px 16px;
+      font-size: 14px;
+    }
+    .related b {
+      display: block;
+      color: #e8a33d;
+      font-weight: normal;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .related a {
+      color: #b9d8bb;
+      text-decoration: none;
+      display: block;
+      padding: 3px 0;
+    }
+    .related a::before {
+      content: "» ";
+      color: #6f9372;
+    }
+    .related a:hover {
+      color: #e8a33d;
+    }
+
+    /* легенда «что здесь из 2026» */
+    .qol-legend {
+      margin: 0 20px 40px;
+      border: 1px dashed #1d4a2a;
+      padding: 16px 20px;
+      font-size: 14px;
+      color: #6f9372;
+      max-width: 920px;
+    }
+    .qol-legend b {
+      color: #e8a33d;
+      font-weight: normal;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 13px;
+    }
+    .qol-legend ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+    }
+    .qol-legend li {
+      margin: 3px 0;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 20px;
+      border-top: 1px solid #1d4a2a;
+      font-size: 14px;
+      color: #6f9372;
+    }
+    footer .svc {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    /* ---- мобильная рамка ---- */
+    .phone {
+      width: 390px;
+      max-width: calc(100% - 40px);
+      margin: 0 20px 40px;
+      border: 3px solid #2c2c2c;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #08110a;
+    }
+    .phone .shell {
+      border: none;
+      margin: 0;
+      min-height: 700px;
+    }
+    .phone header {
+      padding: 10px 14px;
+    }
+    .phone header .title {
+      font-size: 16px;
+    }
+    .phone nav {
+      gap: 4px 10px;
+      font-size: 14px;
+    }
+    .phone nav .login {
+      margin-left: 0;
+    }
+    .phone main {
+      padding: 14px;
+    }
+    .phone .search-wrap .kbd-hint {
+      display: none;
+    }
+    .phone select {
+      width: 100%;
+    }
+    .phone footer {
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="mock-banner">
+      Мокап 4/4 — «Функционал 2026 — лицо 1985» · QoL в ретро-обложке: поиск, фильтры, сортировка — без анимаций
+    </div>
+
+    <div class="frame-label">Десктоп — Архив с поиском и фильтрами</div>
+    <div class="shell">
+      <header>
+        <span class="ship amber">HMS Peregrine</span>
+        <span class="title">ICARUS</span>
+        <nav>
+          <a href="#">Службы</a>
+          <a href="#" class="active">Архив</a>
+          <a href="#">Карта</a>
+          <a href="#">Пакеты</a>
+          <a href="#" class="login">Вход</a>
+        </nav>
+      </header>
+      <main>
+        <h1 class="amber">Архив знаний</h1>
+
+        <div class="toolbar">
+          <div class="search-row">
+            <div class="search-wrap">
+              <input type="search" value="история" placeholder="Поиск по архиву…">
+              <span class="kbd-hint">/ — поиск</span>
+            </div>
+            <select>
+              <option>По дате получения</option>
+              <option>По названию А–Я</option>
+              <option>По разделу</option>
+            </select>
+          </div>
+          <div class="chips">
+            <button class="chip on">Все разделы</button>
+            <button class="chip">Проект Икар</button>
+            <button class="chip">История Империи</button>
+            <button class="chip">Технические работы</button>
+            <button class="chip">Справочные труды</button>
+            <button class="chip">Астрореестр</button>
+          </div>
+          <div class="result-line">Найдено:<b>8</b> статей · запрос «<b>история</b>» · сортировка: по дате получения</div>
+        </div>
+
+        <ul class="list">
+          <li>
+            <a href="#">
+              <div class="item-top">
+                <span class="item-title"><mark>История</mark> стрелкового оружия Британской империи</span>
+                <span class="item-cat">История Империи</span>
+                <span class="item-date">2061-01-01</span>
+              </div>
+              <div class="item-sum">Реестр систем, боеприпасов и ведомственных стандартов армии Империи за два столетия.</div>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <div class="item-top">
+                <span class="item-title"><mark>История</mark> информационных сетей и вычислительных интерфейсов</span>
+                <span class="item-cat">История Империи</span>
+                <span class="item-date">2061-01-01</span>
+              </div>
+              <div class="item-sum">От телеграфных линий до корабельных терминалов: как Империя вела учёт и передавала приказы.</div>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <div class="item-top">
+                <span class="item-title">Общая<mark>История</mark></span>
+                <span class="item-cat">История Империи</span>
+                <span class="item-date">2061-01-01</span>
+              </div>
+              <div class="item-sum">Сводная хронология Империи от экспансии до экспедиции в LHS 1140.</div>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <div class="item-top">
+                <span class="item-title"><mark>История</mark> монархии и парламентского устройства</span>
+                <span class="item-cat">История Империи</span>
+                <span class="item-date">2061-01-01</span>
+              </div>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <div class="item-top">
+                <span class="item-title"><mark>История</mark> военного права Британской империи</span>
+                <span class="item-cat">История Империи</span>
+                <span class="item-date">2061-01-01</span>
+              </div>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <div class="item-top">
+                <span class="item-title"><mark>История</mark> религии в Британской империи</span>
+                <span class="item-cat">История Империи</span>
+                <span class="item-date">2061-01-01</span>
+              </div>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <div class="item-top">
+                <span class="item-title"><mark>История</mark> галлионного оружия и защитных экранов</span>
+                <span class="item-cat">Технические работы</span>
+                <span class="item-date">2061-01-03</span>
+              </div>
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <div class="item-top">
+                <span class="item-title"><mark>История</mark> отмены рабства и трудового права</span>
+                <span class="item-cat">История Империи</span>
+                <span class="item-date">2061-01-01</span>
+              </div>
+            </a>
+          </li>
+        </ul>
+      </main>
+      <footer>
+        <span>Корабельный информационный терминал</span>
+        <span class="svc">Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="frame-label">Десктоп — Архив: пустой результат (понятное состояние)</div>
+    <div class="shell">
+      <header>
+        <span class="ship amber">HMS Peregrine</span>
+        <span class="title">ICARUS</span>
+        <nav>
+          <a href="#">Службы</a>
+          <a href="#" class="active">Архив</a>
+          <a href="#">Карта</a>
+          <a href="#">Пакеты</a>
+          <a href="#" class="login">Вход</a>
+        </nav>
+      </header>
+      <main>
+        <h1 class="amber">Архив знаний</h1>
+        <div class="toolbar">
+          <div class="search-row">
+            <div class="search-wrap">
+              <input type="search" value="телепортация" placeholder="Поиск по архиву…">
+              <span class="kbd-hint">/ — поиск</span>
+            </div>
+            <select>
+              <option>По дате получения</option>
+            </select>
+          </div>
+          <div class="result-line">Найдено:<b>0</b> статей · запрос «<b>телепортация</b>»</div>
+        </div>
+        <div class="empty">
+          По запросу<b>«телепортация»</b> ничего не найдено.<br>
+          <span class="dim">Проверьте написание или сбросьте фильтры разделов. Новые материалы поступают с пакетами данных.</span>
+        </div>
+      </main>
+      <footer>
+        <span>Корабельный информационный терминал</span>
+        <span class="svc">Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="frame-label">Десктоп — Статья: крошки, источник, связанные</div>
+    <div class="shell">
+      <header>
+        <span class="ship amber">HMS Peregrine</span>
+        <span class="title">ICARUS</span>
+        <nav>
+          <a href="#">Службы</a>
+          <a href="#" class="active">Архив</a>
+          <a href="#">Карта</a>
+          <a href="#">Пакеты</a>
+          <a href="#" class="login">Вход</a>
+        </nav>
+      </header>
+      <main>
+        <div class="crumbs"><a href="#">Архив</a> /<a href="#">Проект Икар</a> / Проект ICARUS — состояние на 2061 год</div>
+        <article>
+          <div class="meta">Источник: Адмиралтейство — канцелярия проекта ICARUS · Получено 2061-01-03</div>
+          <h2 class="amber">III. Проект ICARUS — состояние на 2061 год</h2>
+          <p>
+            <b>Задача:</b> совершить первый свободный межзвёздный переход в LHS 1140 и основать постоянную опорную точку для последующих
+            экспедиций.
+          </p>
+          <p>
+            <b>HMS<i>Peregrine</i></b> — малый военный эскорт и курьер с экспериментальной переходной установкой. После подтверждения
+            успешного развёртывания якоря обязан выполнить обратный переход в Солнечную систему и доставить Адмиралтейству отчёт.
+          </p>
+          <div class="related">
+            <b>Связанные материалы</b>
+            <a href="#">HMS Peregrine — устройство корабля</a>
+            <a href="#">Система LHS 1140</a>
+            <a href="#">Физика Перехода</a>
+          </div>
+        </article>
+      </main>
+      <footer>
+        <span>Корабельный информационный терминал</span>
+        <span class="svc">Сервисный персонал</span>
+      </footer>
+    </div>
+
+    <div class="qol-legend">
+      <b>Что здесь из 2026 (функционал)</b>
+      <ul>
+        <li>Поиск по мере ввода с<mark>подсветкой совпадений</mark> и счётчиком результатов — без перезагрузки.</li>
+        <li>Фильтры-чипы по разделам + сортировка (дата / название / раздел) — комбинируются с поиском.</li>
+        <li>Горячая клавиша<b>/</b> фокусирует поиск; навигация по результатам — стрелками.</li>
+        <li>Понятное пустое состояние: что не так и что попробовать.</li>
+        <li>«Хлебные крошки», дата получения, источник и связанные материалы у каждой статьи.</li>
+      </ul>
+    </div>
+
+    <div class="frame-label">Мобильный (390px) — Архив</div>
+    <div class="phone">
+      <div class="shell">
+        <header>
+          <span class="ship amber">HMS Peregrine</span>
+          <span class="title">ICARUS</span>
+          <nav>
+            <a href="#">Службы</a>
+            <a href="#" class="active">Архив</a>
+            <a href="#">Карта</a>
+            <a href="#">Пакеты</a>
+            <a href="#">Вход</a>
+          </nav>
+        </header>
+        <main>
+          <h1 class="amber">Архив</h1>
+          <div class="toolbar">
+            <div class="search-row">
+              <div class="search-wrap">
+                <input type="search" value="история" placeholder="Поиск по архиву…">
+              </div>
+              <select>
+                <option>По дате получения</option>
+                <option>По названию А–Я</option>
+              </select>
+            </div>
+            <div class="chips">
+              <button class="chip on">Все</button>
+              <button class="chip">Проект Икар</button>
+              <button class="chip">История</button>
+              <button class="chip">Техн. работы</button>
+              <button class="chip">Справочник</button>
+              <button class="chip">Астрореестр</button>
+            </div>
+            <div class="result-line">Найдено:<b>8</b></div>
+          </div>
+          <ul class="list">
+            <li>
+              <a href="#">
+                <div class="item-top">
+                  <span class="item-title"><mark>История</mark> стрелкового оружия</span>
+                  <span class="item-date">01-01</span>
+                </div>
+                <div class="item-sum">Реестр систем и боеприпасов армии Империи.</div>
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <div class="item-top">
+                  <span class="item-title">Общая<mark>История</mark></span>
+                  <span class="item-date">01-01</span>
+                </div>
+                <div class="item-sum">Сводная хронология Империи.</div>
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <div class="item-top">
+                  <span class="item-title"><mark>История</mark> религии</span>
+                  <span class="item-date">01-01</span>
+                </div>
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <div class="item-top">
+                  <span class="item-title"><mark>История</mark> монархии</span>
+                  <span class="item-date">01-01</span>
+                </div>
+              </a>
+            </li>
+          </ul>
+        </main>
+        <footer>
+          <span>Корабельный информационный терминал</span>
+          <span class="svc">Сервисный персонал</span>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

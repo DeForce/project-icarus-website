@@ -3,11 +3,14 @@ import { ofetch } from 'ofetch'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 
 const navItems = computed(() => [
   { to: '/admin', label: t('admin.chanceryNav') },
   { to: '/admin/import', label: t('admin.import') },
 ])
+
+const isLoginPage = computed(() => route.path === '/admin/login')
 
 async function logout() {
   await ofetch('/api/admin/session', { method: 'DELETE' })
@@ -21,7 +24,7 @@ async function logout() {
       <AppCrown :size="22" class="shell-crown" />
       <span class="terminal-header-ministry">{{ t('app.ministry') }} ·{{ t('admin.serviceAccess') }}</span>
       <span class="terminal-header-title">{{ t('admin.board') }}</span>
-      <nav class="terminal-nav">
+      <nav v-if="!isLoginPage" class="terminal-nav">
         <NuxtLink v-for="item in navItems" :key="item.to" :to="item.to" class="terminal-nav-link" active-class="is-active">
           {{ item.label }}
         </NuxtLink>
