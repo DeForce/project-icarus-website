@@ -123,9 +123,10 @@ routes:
 
 ## Проверка и поток публикации
 
-1. Валидация: `npx vitest run content/content.test.ts` — гоняет все `content/*.yml` через реальный импортёр на временной БД. Добавление файла в `content/` требует обновления списка в тесте «discovers the package set».
-2. Импорт в живую локальную базу: временный dev-сервер (`ADMIN_USERNAME/PASSWORD` свои, `NUXT_IGNORE_LOCK=1`, порт 3211), логин через `POST /api/admin/session`, затем для каждого файла по порядку `receivedDate`: `POST /api/admin/import/run` (`expectedPackageId: null`) → `POST /api/admin/packages/:id/preview` (должно быть `problems: []`) → `POST /api/admin/packages/:id/publish` (`expectedPackageRevision` из detail). Сервер после — погасить.
-3. Публичная видимость зависит от даты кампании: пакет виден, только когда `receivedDate <= currentDate`. Проверка анонимно: `/api/public/archive`, `/api/public/map`, `/api/public/packages`.
+1. **Валидация файла:** `node scripts/validate-package.mjs <файл.yml>` — прогон через настоящий импортёр на временной БД в памяти. `OK` (exit 0) — файл валиден; `INVALID` (exit 1) — разбор ошибок парсера.
+2. **НЕ добавляй новые файлы в `content/content.test.ts`.** Тесты закрепляют только канонический набор кампании; дополнительные файлы в `content/` тестам не мешают и в списки не заносятся.
+3. **НЕ импортируй и НЕ публикуй пакет в базу сам.** Публикация — только по явному слову владельца. Когда он скажет, поток такой: временный dev-сервер (`ADMIN_USERNAME/PASSWORD` свои, `NUXT_IGNORE_LOCK=1`, порт 3211), логин через `POST /api/admin/session`, затем `POST /api/admin/import/run` (`expectedPackageId: null`) → `POST /api/admin/packages/:id/preview` (должно быть `problems: []`) → `POST /api/admin/packages/:id/publish` (`expectedPackageRevision` из detail). Сервер после — погасить.
+4. Публичная видимость зависит от даты кампании: пакет виден, только когда `receivedDate <= currentDate`. Проверка анонимно: `/api/public/archive`, `/api/public/map`, `/api/public/packages`.
 
 ## Гейт владельца (обязательно спросить)
 
