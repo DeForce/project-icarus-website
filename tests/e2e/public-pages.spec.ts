@@ -42,6 +42,11 @@ test.describe('public terminal pages', () => {
     await expect(articles.first()).toContainText('Метрический якорь')
     await expect(articles.first().locator('mark')).toBeVisible()
 
+    // Cyrillic search is case-insensitive: uppercase query must find the lowercase title.
+    await fillWhenHydrated(page, page.getByRole('searchbox'), 'ЯКОРЬ')
+    await expect(articles.first()).toContainText('Метрический якорь')
+    await expect(articles.first().locator('mark')).toBeVisible()
+
     await fillWhenHydrated(page, page.getByRole('searchbox'), 'zzzz-no-such-word')
     await expect(page.getByText('По вашему запросу ничего не найдено.')).toBeVisible()
   })

@@ -1,4 +1,4 @@
-import { and, asc, eq, lte, ne, sql } from 'drizzle-orm'
+import { and, asc, eq, lte, ne } from 'drizzle-orm'
 import type {
   ArticlePayload,
   CategoryPayload,
@@ -59,15 +59,13 @@ export function publishedReceivedDates(db: TerminalDatabase, asOfDate: string): 
 }
 
 /**
- * Ids of articles whose published payload contains the search text. LIKE wildcards in the
- * search (`%`, `_`, `\`) are escaped and matched literally — a bare LIKE has no escape
- * character on SQLite, so without the ESCAPE clause they would match almost everything.
+ * Ids of articles whose published payload contains the search text. Matching is done in JS,
+ * case-insensitively (including Cyrillic): SQLite LIKE and lower() fold ASCII only, so a SQL
+ * match would treat «История» and «история» as different strings.
  */
 export function findArticleIdsByText(db: TerminalDatabase, asOfDate: string, search: string): Set<string> {
-  const escaped = search.replaceAll(/[\\%_]/g, (char) => `\\${char}`)
-  const pattern = `%${escaped}%`
   const rows = db
-    .select({ entityId: packageChanges.entityId })
+    .select({ entityId: packageChanges.entityId, payloadJson: packageChanges.payloadJson })
     .from(packageChanges)
     .innerJoin(informationPackages, eq(packageChanges.packageId, informationPackages.id))
     .innerJoin(entities, eq(packageChanges.entityId, entities.id))
@@ -77,11 +75,16 @@ export function findArticleIdsByText(db: TerminalDatabase, asOfDate: string, sea
         lte(informationPackages.receivedDate, asOfDate),
         eq(entities.kind, 'article'),
         eq(packageChanges.operation, 'upsert'),
-        sql`${packageChanges.payloadJson} LIKE ${pattern} ESCAPE '\\'`,
       ),
     )
     .all()
-  return new Set(rows.map((row) => row.entityId))
+
+  const needle = search.toLocaleLowerCase('ru')
+  const ids = new Set<string>()
+  for (const row of rows) {
+    if (row.payloadJson !== null && row.payloadJson.toLocaleLowerCase('ru').includes(needle)) ids.add(row.entityId)
+  }
+  return ids
 }
 
 const KIND_KEYS = {

@@ -52,6 +52,25 @@ describe('findArticleIdsByText', () => {
     expect([...findArticleIdsByText(connection.db, '2061-01-06', '_42')]).toEqual([specialBodyId])
     expect(findArticleIdsByText(connection.db, '2061-01-06', '%')).toEqual(new Set([specialBodyId]))
   })
+
+  it('matches case-insensitively, including Cyrillic', () => {
+    const survey = publishWithArticle('Survey', '2061-01-02')
+    const draft = createDraft(connection.db, { title: 'Survey update', receivedDate: '2061-01-03' })
+    const { entityId: reportId } = upsertChange(connection.db, draft.id, draft.revision, {
+      kind: 'article',
+      payload: {
+        title: 'Донесение — История сектора',
+        categoryId: survey.categoryId,
+        bodyMarkdown: 'Годовой отчёт Гидрографической службы.',
+        relatedArticleIds: [],
+      },
+    })
+    publishPackage(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision)
+
+    expect([...findArticleIdsByText(connection.db, '2061-01-06', 'история')]).toEqual([reportId])
+    expect([...findArticleIdsByText(connection.db, '2061-01-06', 'ИСТОРИЯ')]).toEqual([reportId])
+    expect([...findArticleIdsByText(connection.db, '2061-01-06', 'гидрографической')]).toEqual([reportId])
+  })
 })
 
 describe('publishedReceivedDates', () => {
