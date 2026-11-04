@@ -1,6 +1,7 @@
 {
   "app": {
     "title": "ICARUS",
+    "ministry": "Британское Адмиралтейство",
     "shipFallback": "HMS Peregrine",
     "footer": "Корабельный информационный терминал",
     "serviceAccess": "Сервисный персонал"

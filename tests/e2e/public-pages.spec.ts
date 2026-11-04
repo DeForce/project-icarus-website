@@ -5,10 +5,30 @@ test.describe('public terminal pages', () => {
   test('home page shows ship services and navigation', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { name: 'Службы корабля' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Архив', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Карта', exact: true })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Пакеты', exact: true })).toBeVisible()
+    const headerNav = page.locator('.terminal-header .terminal-nav')
+    await expect(headerNav.getByRole('link', { name: 'Архив', exact: true })).toBeVisible()
+    await expect(headerNav.getByRole('link', { name: 'Карта', exact: true })).toBeVisible()
+    await expect(headerNav.getByRole('link', { name: 'Пакеты', exact: true })).toBeVisible()
     await expect(page.getByText('HMS Peregrine · 2061-01-01')).toBeVisible()
+  })
+
+  test('header carries the admiralty ministry line and board title', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByText('Британское Адмиралтейство')).toBeVisible()
+    await expect(page.locator('.terminal-header-title')).toHaveText('ICARUS')
+  })
+
+  test('mobile viewport shows the bottom tab bar, desktop does not', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 })
+    await page.goto('/')
+    const tabbar = page.locator('.tabbar')
+    await expect(tabbar).toBeVisible()
+    for (const label of ['Службы', 'Архив', 'Карта', 'Пакеты']) {
+      await expect(tabbar.getByRole('link', { name: label })).toBeVisible()
+    }
+
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await expect(tabbar).toBeHidden()
   })
 
   test('archive lists articles and supports search', async ({ page }) => {
