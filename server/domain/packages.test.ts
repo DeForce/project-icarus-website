@@ -376,6 +376,44 @@ describe('unpublish', () => {
   })
 })
 
+describe('admin DTO extensions', () => {
+  it('counts changes per package in listPackages', () => {
+    ensureCampaign(connection.db)
+    const { draft } = seedArticleDraft()
+    const empty = createDraft(connection.db, { title: 'Empty', receivedDate: '2061-01-02' })
+
+    const listed = listPackages(connection.db)
+    expect(listed.find((entry) => entry.id === draft.id)?.changeCount).toBe(2)
+    expect(listed.find((entry) => entry.id === empty.id)?.changeCount).toBe(0)
+  })
+
+  it('exposes the earliest sourced change as the package source', () => {
+    ensureCampaign(connection.db)
+    const draft = createDraft(connection.db, { title: 'Sourced', receivedDate: '2061-01-02' })
+    upsertChange(connection.db, draft.id, draft.revision, {
+      kind: 'category',
+      payload: { name: 'C1', parentId: null, order: 1 },
+      effectiveDate: '2060-06-01',
+      source: 'Канцелярия №1',
+    })
+    upsertChange(connection.db, draft.id, getPackageDetail(connection.db, draft.id).revision, {
+      kind: 'category',
+      payload: { name: 'C2', parentId: null, order: 2 },
+      effectiveDate: '2060-01-01',
+      source: 'Канцелярия №2',
+    })
+
+    const detail = getPackageDetail(connection.db, draft.id)
+    expect(detail.source).toBe('Канцелярия №2')
+  })
+
+  it('returns null source for a package without sourced changes', () => {
+    ensureCampaign(connection.db)
+    const { draft } = seedArticleDraft()
+    expect(getPackageDetail(connection.db, draft.id).source).toBeNull()
+  })
+})
+
 describe('publish sequence with reverted drafts', () => {
   it('assigns fresh publishes above sequences retained by reverted drafts', () => {
     ensureCampaign(connection.db)

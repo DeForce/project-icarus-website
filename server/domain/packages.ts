@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, desc, eq, gt, sql } from 'drizzle-orm'
+import { and, count, desc, eq, gt, sql } from 'drizzle-orm'
 import type { ChangeRecord, EntityKind, EntityPayload, PackageInfo } from '../../shared/types.ts'
 import type { TerminalDatabase } from '../database/client.ts'
 import { entities, informationPackages, packageChanges } from '../database/schema.ts'
@@ -50,7 +50,12 @@ interface Tx {
   select: TerminalDatabase['select']
 }
 
-function toPackageInfo(row: typeof informationPackages.$inferSelect): PackageInfo {
+function toPackageInfo(db: TerminalDatabase, row: typeof informationPackages.$inferSelect): PackageInfo {
+  const counted = db
+    .select({ value: count() })
+    .from(packageChanges)
+    .where(eq(packageChanges.packageId, row.id))
+    .get()
   return {
     id: row.id,
     title: row.title,
@@ -60,6 +65,7 @@ function toPackageInfo(row: typeof informationPackages.$inferSelect): PackageInf
     publishedAt: row.publishedAt,
     sequence: row.sequence,
     revision: row.revision,
+    changeCount: counted?.value ?? 0,
   }
 }
 
@@ -94,7 +100,7 @@ export function listPackages(db: TerminalDatabase): PackageInfo[] {
     .from(informationPackages)
     .orderBy(desc(informationPackages.status), desc(informationPackages.receivedDate))
     .all()
-    .map(toPackageInfo)
+    .map((row) => toPackageInfo(db, row))
 }
 
 export function createDraft(
@@ -105,14 +111,21 @@ export function createDraft(
   db.insert(informationPackages)
     .values({ id, title: input.title, receivedDate: input.receivedDate, publicSummary: input.publicSummary ?? null })
     .run()
-  return toPackageInfo(getPackageRow(db, id))
+  return toPackageInfo(db, getPackageRow(db, id))
 }
 
 export function getPackageDetail(db: TerminalDatabase, packageId: string) {
   const row = getPackageRow(db, packageId)
+  const changes = listPackageChanges(db, packageId)
+  const earliestSourced = changes
+    .filter((change) => change.source !== null)
+    .map((change) => ({ change, key: change.effectiveDate ?? row.receivedDate }))
+    .sort((left, right) => (left.key < right.key ? -1 : left.key > right.key ? 1 : 0))
+  const [firstSourced] = earliestSourced
   return {
-    ...toPackageInfo(row),
-    changes: listPackageChanges(db, packageId).map(
+    ...toPackageInfo(db, row),
+    source: firstSourced?.change.source ?? null,
+    changes: changes.map(
       (change): ChangeRecord => ({
         entityId: change.entityId,
         kind: change.kind,
@@ -135,7 +148,7 @@ export function updatePackageMetadata(
     getDraftRow(db, packageId)
     bumpExpectedRevision(tx, packageId, expectedRevision)
     tx.update(informationPackages).set(fields).where(eq(informationPackages.id, packageId)).run()
-    return toPackageInfo(getPackageRow(db, packageId))
+    return toPackageInfo(db, getPackageRow(db, packageId))
   })
 }
 
@@ -301,7 +314,7 @@ export function unpublishPackage(db: TerminalDatabase, packageId: string, expect
     bumpExpectedRevision(tx, packageId, expectedRevision)
     tx.update(informationPackages).set({ status: 'draft', publishedAt: null }).where(eq(informationPackages.id, packageId)).run()
 
-    return toPackageInfo(getPackageRow(db, packageId))
+    return toPackageInfo(db, getPackageRow(db, packageId))
   })
 }
 
@@ -348,6 +361,6 @@ export function publishPackage(db: TerminalDatabase, packageId: string, expected
       .where(eq(informationPackages.id, packageId))
       .run()
 
-    return toPackageInfo(getPackageRow(db, packageId))
+    return toPackageInfo(db, getPackageRow(db, packageId))
   })
 }

@@ -75,6 +75,7 @@ export interface PackageInfo {
   publishedAt: string | null
   sequence: number | null
   revision: number
+  changeCount: number
 }
 
 export interface ChangeRecord {
