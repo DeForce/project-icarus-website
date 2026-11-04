@@ -1,7 +1,8 @@
 /obsidian
 /.codex/
 /.agents/
-/.kimi-code/
+/.kimi-code/*
+!/.kimi-code/skills/
 .idea/
 .vscode/
 
