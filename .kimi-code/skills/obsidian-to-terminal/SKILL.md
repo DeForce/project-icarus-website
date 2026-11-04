@@ -1,5 +1,4 @@
 ---
-
 name: obsidian-to-terminal
 description: Use when converting Obsidian campaign notes into terminal content packages (YAML v1) for the Icarus terminal — applies the in-world author voice, attested-lexicon rule, SIMBAD astronomy lookup, source exceptions, and owner gates.
 ---
