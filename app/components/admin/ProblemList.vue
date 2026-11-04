@@ -6,7 +6,7 @@ const { t } = useI18n()
 
 <template>
   <div v-if="problems.length > 0" class="problem-list">
-    <p class="terminal-error">{{ t('import.problems') }}:</p>
+    <b>{{ t('editor.chanceryNotes') }} ·{{ problems.length }}</b>
     <ul>
       <li v-for="(problem, index) in problems" :key="index"><code>{{ problem.path }}</code> —{{ problem.message }}</li>
     </ul>

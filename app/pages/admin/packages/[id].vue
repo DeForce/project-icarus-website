@@ -1,4 +1,14 @@
 <script setup lang="ts">
+import {
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogRoot,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  useToastManager,
+} from 'reka-ui'
 import type { ChangeDraft } from '~/composables/usePackageEditor'
 import type { ChangeRecord } from '~~/shared/types'
 
@@ -7,6 +17,7 @@ definePageMeta({ layout: 'admin' })
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const toast = useToastManager()
 
 const packageId = route.params.id as string
 const editor = usePackageEditor(packageId)
@@ -64,6 +75,12 @@ const referenceProblems = ref<Array<{ path: string; message: string }>>([])
 const referencesChecked = ref(false)
 const checking = ref(false)
 
+const deleteDialogOpen = ref(false)
+const unpublishDialogOpen = ref(false)
+
+/** Notes from the last reference check block publication until resolved. */
+const notesBlockPublish = computed(() => referencesChecked.value && referenceProblems.value.length > 0)
+
 function displayName(change: ChangeRecord): string {
   if (change.payload && typeof change.payload === 'object') {
     const candidate = change.payload as { name?: unknown; title?: unknown }
@@ -104,10 +121,13 @@ async function onCancelChange(entityId: string) {
   if (result !== undefined) void refreshEntityIndex()
 }
 
-async function onDeleteDraft() {
-  if (!window.confirm(`${t('editor.deleteDraft')}?`)) return
+async function confirmDeleteDraft() {
+  deleteDialogOpen.value = false
   const result = await editor.deleteDraft()
-  if (result !== undefined) void router.replace('/admin')
+  if (result !== undefined) {
+    toast.add({ title: t('editor.toastDraftDeleted'), duration: 4000 })
+    void router.replace('/admin')
+  }
 }
 
 async function onCheckReferences() {
@@ -125,6 +145,7 @@ async function onPublish() {
     const published = await editor.publish()
     if (published) {
       changeDraft.value = null
+      toast.add({ title: t('editor.toastPublished'), duration: 4000 })
       void router.replace(`/packages/${packageId}`)
     }
   } catch (error) {
@@ -132,9 +153,10 @@ async function onPublish() {
   }
 }
 
-async function onUnpublish() {
-  if (!window.confirm(t('editor.unpublishConfirm'))) return
-  await editor.unpublish()
+async function confirmUnpublish() {
+  unpublishDialogOpen.value = false
+  const reverted = await editor.unpublish()
+  if (reverted) toast.add({ title: t('editor.toastUnpublished'), duration: 4000 })
 }
 
 function reloadAfterConflict() {
@@ -152,7 +174,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="panel">
+  <section>
     <template v-if="detail">
       <p class="terminal-dim">
         {{ detail.status === 'draft' ? t('admin.statusDraft') : t('admin.statusPublished') }} ·
@@ -168,22 +190,24 @@ onMounted(() => {
 
       <template v-if="isDraft">
         <h2>{{ t('editor.metadata') }}</h2>
-        <AdminMetadataForm
-          :initial="metadataInitial"
-          :saving="saving"
-          :reset-signal="resetSignal"
-          @update:dirty="metadataDirty = $event"
-          @save="onSaveMetadata"
-        />
+        <div class="panel">
+          <AdminMetadataForm
+            :initial="metadataInitial"
+            :saving="saving"
+            :reset-signal="resetSignal"
+            @update:dirty="metadataDirty = $event"
+            @save="onSaveMetadata"
+          />
+        </div>
 
         <h2>{{ t('editor.changes') }}</h2>
         <p v-if="detail.changes.length === 0" class="terminal-dim">{{ t('editor.changesEmpty') }}</p>
         <ul v-else class="admin-change-list">
           <li v-for="change in detail.changes" :key="change.entityId">
-            <span class="terminal-dim">[{{ t(`packages.operation.${change.operation}`) }}]</span>
+            <span class="kind-tag" :class="change.kind">{{ t(`editor.kind.${change.kind}`) }}</span>
             <span class="admin-change-name">{{ displayName(change) }}</span>
-            <span class="terminal-dim">{{ t(`editor.kind.${change.kind}`) }}</span>
-            <span class="admin-change-actions">
+            <span class="op-tag" :class="change.operation">{{ t(`packages.operation.${change.operation}`) }}</span>
+            <span class="change-actions">
               <button
                 v-if="change.payload"
                 type="button"
@@ -220,25 +244,52 @@ onMounted(() => {
         </div>
 
         <h2>{{ t('editor.preview') }}</h2>
-        <button type="button" class="terminal-button" :disabled="saving || checking" @click="onCheckReferences">
-          {{ t('editor.preview') }}
-        </button>
-        <p v-if="referencesChecked && referenceProblems.length === 0" class="terminal-dim">
+        <div class="form-actions">
+          <button type="button" class="terminal-button terminal-button-ghost" :disabled="saving || checking" @click="onCheckReferences">
+            {{ t('editor.preview') }}
+          </button>
+          <span class="terminal-dim" style="font-size: 13px">{{ t('editor.previewHint') }}</span>
+        </div>
+        <p v-if="referencesChecked && referenceProblems.length === 0" class="ok-line">
           {{ t('editor.previewClean') }}
         </p>
         <AdminProblemList v-if="referenceProblems.length > 0" :problems="referenceProblems" />
 
         <h2>{{ t('editor.publish') }}</h2>
         <p v-if="publishBlocked" class="terminal-dim">{{ t('editor.publishBlocked') }}</p>
+        <p v-if="notesBlockPublish" class="terminal-dim">{{ t('editor.publishBlockedByNotes') }}</p>
         <p v-if="publicationProblems.length > 0" class="terminal-error">{{ t('editor.publishFailed') }}</p>
         <AdminProblemList v-if="publicationProblems.length > 0" :problems="publicationProblems" />
         <div class="form-actions">
-          <button type="button" class="terminal-button" :disabled="saving || publishBlocked" @click="onPublish">
+          <button type="button" class="terminal-button" :disabled="saving || publishBlocked || notesBlockPublish" @click="onPublish">
             {{ t('editor.publish') }}
           </button>
-          <button type="button" class="terminal-button terminal-button-ghost" :disabled="saving" @click="onDeleteDraft">
-            {{ t('editor.deleteDraft') }}
-          </button>
+
+          <AlertDialogRoot v-model:open="deleteDialogOpen">
+            <AlertDialogTrigger as-child>
+              <button type="button" class="terminal-button terminal-button-danger" :disabled="saving">
+                {{ t('editor.deleteDraft') }}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent class="dialog-content">
+              <AlertDialogTitle class="dialog-title">{{ t('editor.deleteDraft') }}?</AlertDialogTitle>
+              <AlertDialogDescription class="terminal-dim">
+                {{ t('editor.deleteDraftDescription') }}
+              </AlertDialogDescription>
+              <div class="form-actions">
+                <AlertDialogAction as-child>
+                  <button type="button" class="terminal-button terminal-button-danger" @click="confirmDeleteDraft">
+                    {{ t('editor.dialogConfirm') }}
+                  </button>
+                </AlertDialogAction>
+                <AlertDialogCancel as-child>
+                  <button type="button" class="terminal-button terminal-button-ghost">
+                    {{ t('editor.dialogCancel') }}
+                  </button>
+                </AlertDialogCancel>
+              </div>
+            </AlertDialogContent>
+          </AlertDialogRoot>
         </div>
       </template>
 
@@ -246,12 +297,34 @@ onMounted(() => {
         <p class="terminal-dim">{{ t('editor.publishedView') }}</p>
         <NuxtLink class="terminal-button" :to="`/packages/${packageId}`">{{ t('packages.heading') }}</NuxtLink>
         <div class="form-actions">
-          <button type="button" class="terminal-button terminal-button-ghost" :disabled="saving" @click="onUnpublish">
-            {{ t('editor.unpublish') }}
-          </button>
+          <AlertDialogRoot v-model:open="unpublishDialogOpen">
+            <AlertDialogTrigger as-child>
+              <button type="button" class="terminal-button terminal-button-ghost" :disabled="saving">
+                {{ t('editor.unpublish') }}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent class="dialog-content">
+              <AlertDialogTitle class="dialog-title">{{ t('editor.unpublish') }}?</AlertDialogTitle>
+              <AlertDialogDescription class="terminal-dim">
+                {{ t('editor.unpublishConfirm') }}
+              </AlertDialogDescription>
+              <div class="form-actions">
+                <AlertDialogAction as-child>
+                  <button type="button" class="terminal-button terminal-button-danger" @click="confirmUnpublish">
+                    {{ t('editor.dialogConfirm') }}
+                  </button>
+                </AlertDialogAction>
+                <AlertDialogCancel as-child>
+                  <button type="button" class="terminal-button terminal-button-ghost">
+                    {{ t('editor.dialogCancel') }}
+                  </button>
+                </AlertDialogCancel>
+              </div>
+            </AlertDialogContent>
+          </AlertDialogRoot>
         </div>
         <div v-if="unpublishBlockers.length > 0" class="problem-list">
-          <p class="terminal-error">{{ t('editor.unpublishBlocked') }}</p>
+          <b>{{ t('editor.unpublishBlocked') }}</b>
           <ul>
             <li v-for="blocker in unpublishBlockers" :key="blocker.id">{{ blocker.title }}</li>
           </ul>
@@ -262,3 +335,34 @@ onMounted(() => {
     <p v-else class="terminal-dim">{{ t('archive.searching') }}</p>
   </section>
 </template>
+
+<style scoped>
+.change-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 60;
+  background: var(--terminal-panel);
+  border: 1px solid var(--terminal-brass);
+  border-top: 3px solid var(--terminal-brass);
+  padding: 22px 26px;
+  max-width: 420px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+.dialog-title {
+  margin: 0 0 8px;
+  color: var(--terminal-brass);
+  font-family: var(--terminal-serif);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+</style>

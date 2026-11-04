@@ -151,22 +151,33 @@ async function runImport() {
       <p class="terminal-dim">{{ preview.packageKey }} ·{{ preview.receivedDate }}</p>
       <p v-if="preview.mode === 'create'" class="terminal-dim">{{ t('import.modeCreate') }}</p>
       <p v-else class="terminal-error">{{ t('import.modeReplace', { count: preview.canceledChangeCount }) }}</p>
-      <p class="terminal-dim">
-        {{ t('import.createdCount', { count: preview.createdCount }) }} ·
-        {{ t('import.updatedCount', { count: preview.updatedCount }) }} ·
-        {{ t('import.removedCount', { count: preview.removedCount }) }}
-      </p>
+
+      <div class="summary-grid">
+        <div class="sum-card">
+          <b>{{ preview.createdCount }}</b>
+          <span>{{ t('import.labelCreated') }}</span>
+        </div>
+        <div class="sum-card">
+          <b>{{ preview.updatedCount }}</b>
+          <span>{{ t('import.labelUpdated') }}</span>
+        </div>
+        <div class="sum-card">
+          <b>{{ preview.removedCount }}</b>
+          <span>{{ t('import.labelRemoved') }}</span>
+        </div>
+      </div>
+
       <ul class="admin-change-list">
         <li v-for="change in preview.changes" :key="change.entityKey">
-          <span class="terminal-dim">[{{ t(`packages.operation.${change.operation}`) }}]</span>
+          <span class="kind-tag" :class="change.kind">{{ t(`editor.kind.${change.kind}`) }}</span>
           <span class="admin-change-name">{{ change.name }}</span>
-          <span class="terminal-dim">
-            {{ t(`editor.kind.${change.kind}`) }}
-            {{ change.isNew ? ' · new' : '' }}
-          </span>
+          <span class="op-tag" :class="change.operation">{{ t(`packages.operation.${change.operation}`) }}</span>
+          <span v-if="change.isNew" class="terminal-dim">· new</span>
         </li>
       </ul>
+
       <AdminProblemList v-if="preview.problems.length > 0" :problems="preview.problems" />
+      <p v-else class="ok-line">{{ t('import.noProblems') }}</p>
       <div class="form-actions">
         <button type="button" class="terminal-button" :disabled="importing || preview.problems.length > 0" @click="runImport">
           {{ t('import.confirm') }}
