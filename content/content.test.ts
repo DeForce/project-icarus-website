@@ -27,7 +27,13 @@ describe('content packages', () => {
     ])
   })
 
-  for (const file of ['2061-01-01-history-imperial.yml', '2061-01-02-reference-works.yml', '2061-01-03-project-icarus.yml', '2061-01-04-astro-registry.yml', '2061-01-05-technical-works.yml']) {
+  for (const file of [
+    '2061-01-01-history-imperial.yml',
+    '2061-01-02-reference-works.yml',
+    '2061-01-03-project-icarus.yml',
+    '2061-01-04-astro-registry.yml',
+    '2061-01-05-technical-works.yml',
+  ]) {
     it(`imports ${file} on a fresh database`, () => {
       const yaml = readFileSync(join(process.cwd(), 'content', file), 'utf8')
       expect(() => importPackageFromYaml(connection.db, yaml, null, null)).not.toThrow()

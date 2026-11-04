@@ -21,7 +21,7 @@
       "!!db",
       "!!backups",
       "!!drizzle/meta",
-      "!!docs/superpowers/README.md",
+      "!!docs/superpowers",
       "!!mockups",
       "!!**/package-lock.json"
     ],
