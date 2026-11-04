@@ -2,6 +2,8 @@
 import type { ChangeDraft } from '~/composables/usePackageEditor'
 import type { ChangeRecord } from '~~/shared/types'
 
+definePageMeta({ layout: 'admin' })
+
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()

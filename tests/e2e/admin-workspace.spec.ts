@@ -25,9 +25,18 @@ async function createDraft(page: Page, fields: { title: string; receivedDate: st
 test.describe('administrator workspace', () => {
   test('dashboard creates a draft and opens the editor', async ({ page }) => {
     await login(page)
+    await expect(page.getByText('Канцелярия')).toBeVisible()
+
+    const deals = page.locator('.data-table')
+    await expect(deals).toBeVisible()
+    await expect(deals.locator('.chip-status', { hasText: 'Опубликован' })).toBeVisible()
+
     await createDraft(page, { title: 'Пакет регресса', receivedDate: '2061-01-05' })
     await expect(page.getByText(/черновик · Ревизия/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Добавить изменение' })).toBeVisible()
+
+    await page.goto('/admin')
+    await expect(deals.locator('.chip-status', { hasText: 'Черновик' })).toBeVisible()
   })
 
   test('metadata draft survives saving an entity change', async ({ page }) => {

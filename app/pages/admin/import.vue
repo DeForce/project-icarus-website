@@ -2,6 +2,8 @@
 import { ofetch } from 'ofetch'
 import type { ImportPreview } from '~~/shared/types'
 
+definePageMeta({ layout: 'admin' })
+
 const router = useRouter()
 const { t } = useI18n()
 
