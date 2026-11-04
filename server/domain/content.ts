@@ -30,6 +30,34 @@ export interface ChangeRow {
   payloadJson: string | null
 }
 
+/**
+ * Entity id -> earliest receivedDate among published packages (<= asOfDate) that upsert it.
+ * Used to stamp public content with the date it first reached the terminal.
+ */
+export function publishedReceivedDates(db: TerminalDatabase, asOfDate: string): Map<string, string> {
+  const rows = db
+    .select({ entityId: packageChanges.entityId, receivedDate: informationPackages.receivedDate })
+    .from(packageChanges)
+    .innerJoin(informationPackages, eq(packageChanges.packageId, informationPackages.id))
+    .innerJoin(entities, eq(packageChanges.entityId, entities.id))
+    .where(
+      and(
+        eq(informationPackages.status, 'published'),
+        lte(informationPackages.receivedDate, asOfDate),
+        eq(packageChanges.operation, 'upsert'),
+        eq(entities.kind, 'article'),
+      ),
+    )
+    .all()
+
+  const dates = new Map<string, string>()
+  for (const row of rows) {
+    const current = dates.get(row.entityId)
+    if (current === undefined || row.receivedDate < current) dates.set(row.entityId, row.receivedDate)
+  }
+  return dates
+}
+
 const KIND_KEYS = {
   category: 'categories',
   article: 'articles',

@@ -2,7 +2,7 @@ import { and, eq, like, lte } from 'drizzle-orm'
 import { defineEventHandler, getQuery } from 'h3'
 import { entities, informationPackages, packageChanges } from '../../database/schema.ts'
 import { getCampaign } from '../../domain/campaign.ts'
-import { projectSnapshot } from '../../domain/content.ts'
+import { projectSnapshot, publishedReceivedDates } from '../../domain/content.ts'
 import { type ArchiveDto, toArchiveDto } from '../../domain/public-dto.ts'
 import { getTerminal } from '../../utils/terminal-db.ts'
 
@@ -15,10 +15,11 @@ export default defineEventHandler((event): ArchiveDto => {
   const { db } = getTerminal()
   const currentDate = getCampaign(db).currentDate
   const snapshot = projectSnapshot(db, { asOfDate: currentDate })
+  const receivedDates = publishedReceivedDates(db, currentDate)
 
   const query = getQuery(event)
   const search = typeof query.search === 'string' ? query.search.trim() : ''
-  if (search === '') return toArchiveDto(snapshot)
+  if (search === '') return toArchiveDto(snapshot, receivedDates)
 
   const pattern = `%${escapeLikePattern(search)}%`
   const matchingArticleIds = new Set(
@@ -41,7 +42,7 @@ export default defineEventHandler((event): ArchiveDto => {
       .map((row) => row.entityId),
   )
 
-  const archived = toArchiveDto(snapshot)
+  const archived = toArchiveDto(snapshot, receivedDates)
   return { ...archived, articles: archived.articles.filter((article) => matchingArticleIds.has(article.id)) }
 })
 

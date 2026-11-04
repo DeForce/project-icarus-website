@@ -13,6 +13,8 @@ export interface ArchiveArticleSummaryDto {
   title: string
   categoryId: string
   summary: string
+  /** Date of the first published package that delivered this article, if known. */
+  receivedDate: string | null
 }
 
 export interface ArchiveDto {
@@ -32,6 +34,8 @@ export interface ArticleDetailDto {
   categoryName: string
   bodyMarkdown: string
   relatedArticles: RelatedArticleDto[]
+  /** Date of the first published package that delivered this article, if known. */
+  receivedDate: string | null
 }
 
 const SUMMARY_MAX_CHARS = 200
@@ -48,7 +52,7 @@ export function summaryFromMarkdown(bodyMarkdown: string): string {
   return `${paragraph.slice(0, SUMMARY_MAX_CHARS).replace(/\s+\S*$/, '')}…`
 }
 
-export function toArchiveDto(snapshot: ContentSnapshot): ArchiveDto {
+export function toArchiveDto(snapshot: ContentSnapshot, receivedDates?: Map<string, string>): ArchiveDto {
   return {
     categories: snapshot.categories.map((entry) => ({
       id: entry.id,
@@ -61,6 +65,7 @@ export function toArchiveDto(snapshot: ContentSnapshot): ArchiveDto {
       title: entry.payload.title,
       categoryId: entry.payload.categoryId,
       summary: summaryFromMarkdown(entry.payload.bodyMarkdown),
+      receivedDate: receivedDates?.get(entry.id) ?? null,
     })),
   }
 }
@@ -69,7 +74,11 @@ export function findArticle(snapshot: ContentSnapshot, id: string): SnapshotEnti
   return snapshot.articles.find((entry) => entry.id === id)
 }
 
-export function toArticleDetailDto(snapshot: ContentSnapshot, article: SnapshotEntity<ArticlePayload>): ArticleDetailDto {
+export function toArticleDetailDto(
+  snapshot: ContentSnapshot,
+  article: SnapshotEntity<ArticlePayload>,
+  receivedDate: string | null = null,
+): ArticleDetailDto {
   const visibleIds = new Set(snapshot.articles.map((entry) => entry.id))
   return {
     id: article.id,
@@ -77,6 +86,7 @@ export function toArticleDetailDto(snapshot: ContentSnapshot, article: SnapshotE
     categoryId: article.payload.categoryId,
     categoryName: snapshot.categories.find((entry) => entry.id === article.payload.categoryId)?.payload.name ?? '',
     bodyMarkdown: article.payload.bodyMarkdown,
+    receivedDate,
     relatedArticles: article.payload.relatedArticleIds
       .filter((id) => visibleIds.has(id))
       .map((id) => {
