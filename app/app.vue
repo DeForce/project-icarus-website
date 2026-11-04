@@ -11,6 +11,7 @@ import { ToastProvider, ToastViewport } from 'reka-ui'
   </ToastProvider>
 </template>
 
+<!-- biome-ignore lint/suspicious/useScopedStyles: the toast viewport renders outside this component tree. -->
 <style>
 .toast-viewport {
   position: fixed;

@@ -72,8 +72,8 @@ describe('draft lifecycle', () => {
     // 'Later received' is published FIRST so sequence order and received-date order disagree.
     const lateReceived = createDraft(connection.db, { title: 'Late received', receivedDate: '2061-01-06' })
     const earlyReceived = createDraft(connection.db, { title: 'Early received', receivedDate: '2061-01-02' })
-    const oldDraft = createDraft(connection.db, { title: 'Old draft', receivedDate: '2061-01-01' })
-    const newDraft = createDraft(connection.db, { title: 'New draft', receivedDate: '2061-01-05' })
+    createDraft(connection.db, { title: 'Old draft', receivedDate: '2061-01-01' })
+    createDraft(connection.db, { title: 'New draft', receivedDate: '2061-01-05' })
     for (const draft of [lateReceived, earlyReceived]) {
       upsertChange(connection.db, draft.id, draft.revision, {
         kind: 'category',
