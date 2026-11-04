@@ -51,11 +51,7 @@ interface Tx {
 }
 
 function toPackageInfo(db: TerminalDatabase, row: typeof informationPackages.$inferSelect): PackageInfo {
-  const counted = db
-    .select({ value: count() })
-    .from(packageChanges)
-    .where(eq(packageChanges.packageId, row.id))
-    .get()
+  const counted = db.select({ value: count() }).from(packageChanges).where(eq(packageChanges.packageId, row.id)).get()
   return {
     id: row.id,
     title: row.title,

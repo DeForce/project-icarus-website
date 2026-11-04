@@ -210,7 +210,6 @@ test.describe('administrator workspace', () => {
 
   test('unpublish is blocked while a later published package references its entity', async ({ page }) => {
     await login(page)
-    page.on('dialog', (dialog) => void dialog.accept())
     const suffix = `u${Date.now()}`
 
     const firstId = await createDraft(page, { title: `Отмена А ${suffix}`, receivedDate: '2061-01-01' })
@@ -247,13 +246,13 @@ test.describe('administrator workspace', () => {
 
     await page.goto(`/admin/packages/${firstId}`)
     await page.getByRole('button', { name: 'Вернуть в черновик' }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Подтвердить' }).click()
     await expect(page.getByText('Возврат в черновик невозможен')).toBeVisible()
     await expect(page.locator('.problem-list li', { hasText: `Отмена Б ${suffix}` })).toBeVisible()
   })
 
   test('reverting a package to draft removes it from the public journal until republished', async ({ page, browser }) => {
     await login(page)
-    page.on('dialog', (dialog) => void dialog.accept())
     const suffix = `r${Date.now()}`
 
     const packageId = await createDraft(page, { title: `Возврат ${suffix}`, receivedDate: '2061-01-01' })
@@ -270,6 +269,7 @@ test.describe('administrator workspace', () => {
 
     await page.goto(`/admin/packages/${packageId}`)
     await page.getByRole('button', { name: 'Вернуть в черновик' }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Подтвердить' }).click()
     await expect(page.getByText(/черновик · Ревизия/)).toBeVisible()
 
     await anon.reload()
