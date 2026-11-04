@@ -63,15 +63,21 @@ describe('content packages', () => {
   it('discovers the package set', () => {
     expect(files.length).toBeGreaterThanOrEqual(5)
     expect(files.sort()).toEqual([
-      'astro-registry.yml',
-      'history-imperial.yml',
-      'project-icarus.yml',
-      'reference-works.yml',
-      'technical-works.yml',
+      '2061-01-04-astro-registry.yml',
+      '2061-01-01-history-imperial.yml',
+      '2061-01-03-project-icarus.yml',
+      '2061-01-02-reference-works.yml',
+      '2061-01-05-technical-works.yml',
     ])
   })
 
-  for (const file of ['history-imperial.yml', 'reference-works.yml', 'project-icarus.yml', 'astro-registry.yml', 'technical-works.yml']) {
+  for (const file of [
+    '2061-01-01-history-imperial.yml',
+    '2061-01-02-reference-works.yml',
+    '2061-01-03-project-icarus.yml',
+    '2061-01-04-astro-registry.yml',
+    '2061-01-05-technical-works.yml',
+  ]) {
     it(`imports ${file} on a fresh database`, () => {
       const yaml = readFileSync(join(process.cwd(), 'content', file), 'utf8')
       expect(() => importPackageFromYaml(connection.db, yaml, null, null)).not.toThrow()
@@ -110,20 +116,20 @@ git commit -m "test: validate content packages through the import pipeline"
 ### Task 3: History package
 
 **Files:**
-- Create: `content/history-imperial.yml`
+- Create: `../../../content/2061-01-01-history-imperial.yml`
 - Source: `obsidian/История/Предыстория Общая.md` (read-only)
 
 **Interfaces:**
 - Produces: package `history-imperial`, receivedDate `2061-01-01`, title «История Империи»; category `history-imperial` «История Империи»; 8 articles with keys `history-overview`, `history-firearms`, `history-religion`, `history-pharmacology`, `history-military-law`, `history-labour`, `history-monarchy`, `history-networks` — one per top-level `#` section of the source, bodies preserving the source's headings/tables/lists.
 
-- [ ] **Step 1:** Read the source file; write `content/history-imperial.yml` per the Interfaces block. Header `source: Имперское историческое ведомство`, `publicSummary` in-world one-liner.
-- [ ] **Step 2:** Run `npx vitest run content/content.test.ts` — the `history-imperial.yml` import case passes.
+- [ ] **Step 1:** Read the source file; write `../../../content/2061-01-01-history-imperial.yml` per the Interfaces block. Header `source: Имперское историческое ведомство`, `publicSummary` in-world one-liner.
+- [ ] **Step 2:** Run `npx vitest run content/content.test.ts` — the `2061-01-01-history-imperial.yml` import case passes.
 - [ ] **Step 3:** Commit `git commit -m "content: add imperial history package"`.
 
 ### Task 4: Reference works package
 
 **Files:**
-- Create: `content/reference-works.yml`
+- Create: `../../../content/2061-01-02-reference-works.yml`
 - Source: `obsidian/История/Глоссарий.md`, `obsidian/История/Английские Дома.md`, `obsidian/Флот/*.md`, `obsidian/История/Лексикон.md` (read-only)
 
 **Interfaces:**
@@ -138,39 +144,39 @@ git commit -m "test: validate content packages through the import pipeline"
 ### Task 5: Project Icarus package
 
 **Files:**
-- Create: `content/project-icarus.yml`
+- Create: `../../../content/2061-01-03-project-icarus.yml`
 - Source: `obsidian/История/Имперский Астрографический Реестр.md` §III only, `obsidian/История/Корабли.md` §10 (read-only)
 
 **Interfaces:**
 - Produces: package `project-icarus`, receivedDate `2061-01-03`, title «Проект Икар»; category `icarus-project` «Проект Икар»; articles `icarus-status-2061` (registry §III verbatim, it is already an in-world text) and `icarus-peregrine` (Корабли §10).
 
-- [ ] **Step 1:** Write `content/project-icarus.yml` per the Interfaces block; header `source: Адмиралтейство — канцелярия проекта ICARUS`.
+- [ ] **Step 1:** Write `../../../content/2061-01-03-project-icarus.yml` per the Interfaces block; header `source: Адмиралтейство — канцелярия проекта ICARUS`.
 - [ ] **Step 2:** Run the content test; commit `git commit -m "content: add project icarus package"`.
 
 ### Task 6: Astro registry package
 
 **Files:**
-- Create: `content/astro-registry.yml`
+- Create: `../../../content/2061-01-04-astro-registry.yml`
 - Source: `obsidian/История/Имперский Астрографический Реестр.md` §I and §II, Task 2 values (read-only source)
 
 **Interfaces:**
 - Consumes: Task 2 astronomy values.
 - Produces: package `astro-registry`, receivedDate `2061-01-04`, title «Имперский астрографический реестр»; category `astro-registry` «Астрографический реестр»; articles `astro-sol` (registry §I, verbatim) and `astro-lhs-1140` (registry §II, verbatim); system `sol` (supersedes the demo entity: astronomy G2V, worldClass `central`, description and `article: astro-sol`); system `lhs-1140` (Task 2 astronomy, worldClass `uncolonized`, `article: astro-lhs-1140`); route `icarus-route` from `sol` to `lhs-1140`, type `experimental`, status `unknown`, direction `forward`, operator «Проект ICARUS».
 
-- [ ] **Step 1:** Write `content/astro-registry.yml` per the Interfaces block; header `source: Имперское астрографическое управление`.
+- [ ] **Step 1:** Write `../../../content/2061-01-04-astro-registry.yml` per the Interfaces block; header `source: Имперское астрографическое управление`.
 - [ ] **Step 2:** Run the content test (includes the combined no-collision case with the demo `sol` key on a fresh DB — the demo seed is not in the test DB, so no collision is expected there; collision with the live demo package is handled at import time by key resolution, and must be confirmed in Task 8).
 - [ ] **Step 3:** Commit `git commit -m "content: add astrographic registry package"`.
 
 ### Task 7: Technical works package
 
 **Files:**
-- Create: `content/technical-works.yml`
+- Create: `../../../content/2061-01-05-technical-works.yml`
 - Source: `obsidian/История/Считатели.md`, `obsidian/История/Галлиетовые Щиты и Оружие.md`, `obsidian/История/Корабли.md` §1–9, `obsidian/История/Планетарное сообщение.md` (read-only)
 
 **Interfaces:**
 - Produces: package `technical-works`, receivedDate `2061-01-05`, title «Технические описания»; category `tech-works` «Технические описания»; articles `tech-computers` (Считатели), `tech-gallion` (Галлиетовые щиты), `tech-engines` (Корабли §1–9), `tech-planetary` (Планетарное сообщение).
 
-- [ ] **Step 1:** Write `content/technical-works.yml` per the Interfaces block; header `source: Имперское техническое ведомство`.
+- [ ] **Step 1:** Write `../../../content/2061-01-05-technical-works.yml` per the Interfaces block; header `source: Имперское техническое ведомство`.
 - [ ] **Step 2:** Run `npx vitest run content/content.test.ts` — full suite green, including the combined import.
 - [ ] **Step 3:** Commit `git commit -m "content: add technical works package"`.
 
@@ -199,3 +205,16 @@ git commit -m "test: validate content packages through the import pipeline"
 
 - Spec coverage: package set (Tasks 3–7), lexicon reduction (Task 4 step 2), astronomy (Tasks 2 + 6), exclusions enforced by task source lists, owner gates (Task 8), import/verify (Task 9), skill (Task 10), demo supersede verification (Task 9 step 2).
 - Proportion: conversion task bodies are deliberately short — the converter needs the source text and the format, which the Interfaces blocks and the v1 schema pin; transcribing article text into the plan would be noise.
+
+## Verification record (completed)
+
+- Content harness: `content/content.test.ts` — all 5 packages import on a fresh database through the real `importPackageFromYaml` (7/7 after the owner date-prefix rename).
+- Voice pass: 505 changed lines across 5 packages reviewed by a fresh reviewer against owner feedback (present tense for the current era); zero fact/name/number drift (machine comparison).
+- Live import (local test instance): all 5 packages published №1–№5 after a full DB reset; demo package removed (it was superseded by campaign content); anonymous visibility follows the campaign date as designed.
+- Conversion skill (Task 10): `~/.kimi-code/skills/obsidian-to-terminal/SKILL.md`, created with TDD per superpowers:writing-skills — baseline subagent run violated tense/lexicon/attestation/SIMBAD rules; with the skill it complies (validated on a fresh run with owner-gate questions).
+
+## Limitations
+
+- The LHS 1140 astronomy came from SIMBAD via the ident table (fetch-star script does not resolve the main_id directly).
+- `relatedArticles` are empty across the five packages (no cross-links wired).
+- Mixed-tense line in `2061-01-01-history-imperial.yml` (~line 1029) and «Рабочая реконструкция» wording in the registry article remain as documented during the voice pass.
