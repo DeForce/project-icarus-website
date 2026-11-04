@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SelectContent, SelectItem, SelectPortal, SelectRoot, SelectTrigger, SelectValue } from 'reka-ui'
+import { SelectContent, SelectItem, SelectPortal, SelectRoot, SelectTrigger } from 'reka-ui'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -109,7 +109,7 @@ onBeforeUnmount(() => {
         </div>
         <SelectRoot v-model="sort">
           <SelectTrigger class="terminal-input" :aria-label="t('archive.sortLabel')">
-            <SelectValue />
+            <span>{{ sortOptions.find((option) => option.value === sort)?.label }}</span>
           </SelectTrigger>
           <SelectPortal>
             <SelectContent position="popper" class="select-content">

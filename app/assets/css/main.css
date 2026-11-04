@@ -433,9 +433,17 @@ a {
 /* ---- документ (статья) ---- */
 
 .crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  align-items: baseline;
   font-size: 14px;
   color: var(--terminal-dim);
   margin: 2px 0 16px;
+}
+
+.crumbs .crumb-sep {
+  color: var(--terminal-faint);
 }
 
 .crumbs a {
@@ -1285,6 +1293,10 @@ select.terminal-input {
 
   .archive-kbd-hint {
     display: none;
+  }
+
+  .archive-search-row > .terminal-input {
+    width: 100%;
   }
 
   /* таблица дел складывается в карточку */

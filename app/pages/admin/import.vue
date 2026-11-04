@@ -99,7 +99,6 @@ async function runImport() {
   <section class="panel">
     <h1>{{ t('import.heading') }}</h1>
     <p class="terminal-dim">{{ t('import.hint') }}</p>
-    <NuxtLink class="terminal-button terminal-button-ghost" to="/admin">{{ t('admin.heading') }}</NuxtLink>
 
     <div v-if="conflict" class="conflict-banner">
       <p>{{ t('import.conflict') }}</p>

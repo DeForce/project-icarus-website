@@ -6,7 +6,9 @@ import type { Locator, Page } from '@playwright/test'
  * Retries until the value sticks for a short settle window.
  */
 export async function fillWhenHydrated(page: Page, locator: Locator, value: string): Promise<void> {
-  for (let attempt = 0; attempt < 10; attempt++) {
+  // Generous retry budget: under a full-suite run the dev server can take seconds to compile
+  // and hydrate while both viewport projects share it, and a pre-hydration fill never sticks.
+  for (let attempt = 0; attempt < 25; attempt++) {
     await locator.fill(value)
     await page.waitForTimeout(150)
     if ((await locator.inputValue()) === value) {

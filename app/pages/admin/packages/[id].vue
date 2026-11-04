@@ -295,8 +295,8 @@ onMounted(() => {
 
       <template v-else>
         <p class="terminal-dim">{{ t('editor.publishedView') }}</p>
-        <NuxtLink class="terminal-button" :to="`/packages/${packageId}`">{{ t('packages.heading') }}</NuxtLink>
         <div class="form-actions">
+          <NuxtLink class="terminal-button" :to="`/packages/${packageId}`">{{ t('packages.heading') }}</NuxtLink>
           <AlertDialogRoot v-model:open="unpublishDialogOpen">
             <AlertDialogTrigger as-child>
               <button type="button" class="terminal-button terminal-button-ghost" :disabled="saving">

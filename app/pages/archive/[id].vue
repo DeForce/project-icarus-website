@@ -11,7 +11,10 @@ const { data, error } = useFetch(() => `/api/public/articles/${route.params.id}`
     <template v-if="data">
       <nav class="crumbs" :aria-label="t('archive.crumbsLabel')">
         <NuxtLink to="/archive">{{ t('nav.archive') }}</NuxtLink>
-        <span>/{{ data.categoryName }} /{{ data.title }}</span>
+        <span class="crumb-sep" aria-hidden="true">/</span>
+        <span>{{ data.categoryName }}</span>
+        <span class="crumb-sep" aria-hidden="true">/</span>
+        <span>{{ data.title }}</span>
       </nav>
 
       <article class="document">
