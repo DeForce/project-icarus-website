@@ -77,6 +77,9 @@ test.describe('public terminal pages', () => {
     await page.locator('.archive-list-link', { hasText: 'Метрический якорь' }).first().click()
     await expect(page.getByRole('heading', { name: 'Метрический якорь' })).toBeVisible()
     await expect(page.locator('.markdown-body')).toContainText('якор')
+    await expect(page.locator('.document')).toBeVisible()
+    await expect(page.locator('.document-stamp')).toContainText('Получено')
+    await expect(page.locator('.crumbs')).toContainText('Архив')
   })
 
   test('unknown article shows the not-found state', async ({ page }) => {
