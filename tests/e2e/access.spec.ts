@@ -19,7 +19,7 @@ test.describe('admin access', () => {
     await fillWhenHydrated(page, page.getByLabel('Пароль'), 'test-password')
     await page.getByRole('button', { name: 'Войти' }).click()
     await expect(page).toHaveURL(/\/admin$/)
-    await expect(page.getByRole('heading', { name: 'Служебная консоль' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Приказ о кампании' })).toBeVisible()
 
     await page.getByRole('button', { name: 'Выйти' }).click()
     await expect(page).toHaveURL(/\/admin\/login$/)
