@@ -922,6 +922,13 @@ select.terminal-input {
   color: var(--terminal-brass);
 }
 
+.select-content {
+  min-width: var(--reka-select-trigger-width, 220px);
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-border);
+  z-index: 30;
+}
+
 .picker-dropdown {
   position: absolute;
   z-index: 10;

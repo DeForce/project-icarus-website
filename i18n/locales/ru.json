@@ -26,8 +26,16 @@
   "archive": {
     "heading": "Архив знаний",
     "searchPlaceholder": "Поиск по архиву…",
+    "searchKeyHint": "/ — поиск",
     "searching": "Поиск…",
+    "found": "Найдено: {count}",
+    "sortLabel": "Упорядочить",
+    "sortReceived": "По дате получения",
+    "sortTitle": "По названию А–Я",
+    "sortCategory": "По разделу",
+    "allCategories": "Все разделы",
     "empty": "По вашему запросу ничего не найдено.",
+    "emptyHint": "Проверьте написание или сбросьте фильтры разделов.",
     "uncategorized": "Без категории",
     "related": "Связанные материалы",
     "back": "Назад в архив"
