@@ -240,6 +240,7 @@ a {
   color: var(--terminal-faint);
   font-size: 12px;
   letter-spacing: 0.2em;
+  text-transform: uppercase;
 }
 
 .service-card-title {
