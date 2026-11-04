@@ -192,3 +192,17 @@
 - Spec coverage: токены (T3), шапка/мобильный таб-бар (T4), главная (T5), архив QoL + даты (T1/T6), статья (T7), пакеты/карта/вход (T8), админ layout/главная/редактор/импорт (T9/T10), Reka UI точки (T4 Select? — сортировка T6, Select статус T9, AlertDialog T9/T10, Toast T4/T9/T10, Tooltip — не вынесен в задачи: добавить?). Пропуск: Tooltip. Решение: Tooltip — отложить, нет кнопок-иконок без подписей в мокапах (YAGNI).
 - Дата первого получения, changeCount/source — покрыты unit-тестами (T1/T2); видимость будущих пакетов — T1; спецсимволы LIKE — существующий `escapeLikePattern`, подсветка клиентская регэксп-escape в T6 (добавить в шаг: escape регулярки при подсветке).
 - Review Focus 1–5 распределены: 1,2 → T1; 3 → T6; 4 → T9; 5 → T10.
+
+## Verification record (completed)
+
+- `npm run check` — exit 0 (Biome lint clean, typecheck clean, 82 unit tests, production build).
+- Full Playwright suite — 61 passed / 1 skipped (pre-existing conditional skip) / 0 failed.
+- Visual sweep — screenshots of all screens, desktop + 390px, reviewed against mockups 05/06: `mockups/shots/`.
+- Whole-branch review (fresh reviewer): 0 Critical, 3 Important (LIKE escape, toast rendering, admin login layout) — all fixed with RED→GREEN tests; 7 Minor — fixed 1, 6 ruled/deferred in the ledger.
+
+## Limitations
+
+- Deals table has no client-side status filter/search (planned in Task 9, dropped: low value at campaign scale).
+- No toast on campaign save (only publish/unpublish/delete).
+- Logout has no confirmation dialog.
+- e2e assertions on shared-database totals were made relative (both viewport projects share one DB by design of the harness).
