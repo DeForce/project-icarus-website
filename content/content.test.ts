@@ -24,6 +24,7 @@ describe('content packages', () => {
       '2061-01-03-project-icarus.yml',
       '2061-01-04-astro-registry.yml',
       '2061-01-05-technical-works.yml',
+      '2061-01-06-civilian-mail.yml',
     ])
   })
 
@@ -33,6 +34,7 @@ describe('content packages', () => {
     '2061-01-03-project-icarus.yml',
     '2061-01-04-astro-registry.yml',
     '2061-01-05-technical-works.yml',
+    '2061-01-06-civilian-mail.yml',
   ]) {
     it(`imports ${file} on a fresh database`, () => {
       const yaml = readFileSync(join(process.cwd(), 'content', file), 'utf8')
