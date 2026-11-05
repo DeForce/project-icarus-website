@@ -52,6 +52,28 @@ test.describe('star cartography', () => {
     await expect(card).toHaveCount(0)
   })
 
+  test('scene normalizes all system positions inside the fixed grid', async ({ page }) => {
+    await page.goto('/map')
+    const scene = page.getByTestId('star-scene')
+    await expect(scene).toHaveAttribute('data-markers', '3')
+
+    // Mirrors app/utils/map-scale.ts: the farthest scene position (light years)
+    // must land on the fit radius, so the whole set stays inside the ±10 grid.
+    const expected = await page.evaluate(async () => {
+      const LY_PER_PARSEC = 3.26156
+      const MAP_FIT_RADIUS = 8.5
+      const response = await fetch('/api/public/map')
+      const data = (await response.json()) as {
+        systems: { astronomy: { distance: number | null } }[]
+      }
+      const maxDistance = Math.max(...data.systems.map((system) => (system.astronomy.distance ?? 0) * LY_PER_PARSEC), 0)
+      return maxDistance > 0 ? MAP_FIT_RADIUS / maxDistance : 1
+    })
+
+    const scale = Number(await scene.getAttribute('data-scale'))
+    expect(scale).toBeCloseTo(expected, 6)
+  })
+
   test('deep link selects the system without forced navigation', async ({ page }) => {
     await page.goto('/map')
     await expect(page.getByTestId('star-scene')).toHaveAttribute('data-markers', '3')

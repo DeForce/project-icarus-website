@@ -125,6 +125,7 @@ function rebuildContent() {
   applySelection()
   if (canvasEl.value) {
     canvasEl.value.dataset.markers = String(markers.size)
+    canvasEl.value.dataset.scale = String(scale)
   }
 }
 
