@@ -295,6 +295,15 @@ onMounted(() => {
 
       <template v-else>
         <p class="terminal-dim">{{ t('editor.publishedView') }}</p>
+        <h2>{{ t('editor.changes') }}</h2>
+        <p v-if="detail.changes.length === 0" class="terminal-dim">{{ t('editor.changesEmpty') }}</p>
+        <ul v-else class="admin-change-list">
+          <li v-for="change in detail.changes" :key="change.entityId">
+            <span class="kind-tag" :class="change.kind">{{ t(`editor.kind.${change.kind}`) }}</span>
+            <span class="admin-change-name">{{ displayName(change) }}</span>
+            <span class="op-tag" :class="change.operation">{{ t(`packages.operation.${change.operation}`) }}</span>
+          </li>
+        </ul>
         <div class="form-actions">
           <NuxtLink class="terminal-button" :to="`/packages/${packageId}`">{{ t('packages.heading') }}</NuxtLink>
           <AlertDialogRoot v-model:open="unpublishDialogOpen">
