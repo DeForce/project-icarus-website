@@ -52,7 +52,7 @@ test.describe('administrator workspace', () => {
     await fillWhenHydrated(page, changeEditor.getByLabel('Название'), 'Тестовая категория')
     await changeEditor.getByRole('button', { name: 'Сохранить' }).click()
 
-    await expect(page.getByText('Тестовая категория')).toBeVisible()
+    await expect(page.locator('.admin-change-list').getByText('Тестовая категория')).toBeVisible()
     await expect(titleInput).toHaveValue('Переименованный вручную')
     await expect(page.getByText('Есть несохранённые изменения.')).toBeVisible()
   })
@@ -164,7 +164,7 @@ test.describe('administrator workspace', () => {
     await page.getByRole('button', { name: 'Добавить изменение' }).click()
     await changeEditor.getByLabel('Название').fill('Категория навигации')
     await changeEditor.getByRole('button', { name: 'Сохранить' }).click()
-    await expect(page.getByText('Категория навигации')).toBeVisible()
+    await expect(page.locator('.admin-change-list').getByText('Категория навигации')).toBeVisible()
 
     // Article: pick the draft category through the combobox, add and re-add a related article.
     await page.getByRole('button', { name: 'Добавить изменение' }).click()

@@ -141,6 +141,8 @@
     "revision": "Ревизия",
     "changes": "Изменения",
     "changesEmpty": "В пакете нет изменений.",
+    "contentView": "Материалы пакета",
+    "contentViewEmpty": "В пакете нет материалов для просмотра.",
     "addChange": "Добавить изменение",
     "editChange": "Редактировать",
     "cancelChange": "Отменить изменение",

@@ -10,7 +10,7 @@ import {
   useToastManager,
 } from 'reka-ui'
 import type { ChangeDraft } from '~/composables/usePackageEditor'
-import type { ChangeRecord } from '~~/shared/types'
+import type { ArticlePayload, ChangeRecord } from '~~/shared/types'
 
 definePageMeta({ layout: 'admin' })
 
@@ -89,6 +89,35 @@ function displayName(change: ChangeRecord): string {
   }
   return change.entityId
 }
+
+interface ContentMaterial {
+  key: string
+  kind: ChangeRecord['kind']
+  title: string
+  markdown: string | null
+  fields: Array<{ label: string; value: string }>
+}
+
+/** Upsert materials of the package itself, in change order; remove changes and reference ids are skipped. */
+const contentMaterials = computed<ContentMaterial[]>(() => {
+  const changes = detail.value?.changes ?? []
+  return changes
+    .filter((change) => change.operation === 'upsert' && change.payload !== null)
+    .map((change) => {
+      if (change.kind === 'article') {
+        const payload = change.payload as ArticlePayload
+        return { key: change.entityId, kind: change.kind, title: payload.title, markdown: payload.bodyMarkdown, fields: [] }
+      }
+      const payload = change.payload as Record<string, unknown>
+      const fields = Object.entries(payload)
+        .filter(([label, value]) => {
+          if (label === 'name' || label === 'title' || label.endsWith('Id')) return false
+          return typeof value === 'number' || (typeof value === 'string' && value !== '')
+        })
+        .map(([label, value]) => ({ label, value: String(value) }))
+      return { key: change.entityId, kind: change.kind, title: displayName(change), markdown: null, fields }
+    })
+})
 
 function startNewChange() {
   changeDraft.value = { entityId: undefined, kind: 'category', payload: { name: '', parentId: null, order: 0 } }
@@ -339,6 +368,27 @@ onMounted(() => {
           </ul>
         </div>
       </template>
+
+      <details class="content-view">
+        <summary>{{ t('editor.contentView') }} ·{{ contentMaterials.length }}</summary>
+        <p v-if="contentMaterials.length === 0" class="terminal-dim">{{ t('editor.contentViewEmpty') }}</p>
+        <template v-for="material in contentMaterials" :key="material.key">
+          <article v-if="material.kind === 'article'" class="content-view-article">
+            <h3>{{ material.title }}</h3>
+            <MarkdownBody :markdown="material.markdown ?? ''" />
+          </article>
+          <div v-else class="content-view-card">
+            <span class="kind-tag" :class="material.kind">{{ t(`editor.kind.${material.kind}`) }}</span>
+            <b>{{ material.title }}</b>
+            <dl>
+              <template v-for="field in material.fields" :key="field.label">
+                <dt>{{ field.label }}</dt>
+                <dd>{{ field.value }}</dd>
+              </template>
+            </dl>
+          </div>
+        </template>
+      </details>
     </template>
     <p v-else-if="editor.loadError.value" class="terminal-error">{{ t('editor.notFound') }}</p>
     <p v-else class="terminal-dim">{{ t('archive.searching') }}</p>
@@ -350,6 +400,60 @@ onMounted(() => {
   display: flex;
   gap: 8px;
   margin-left: auto;
+}
+
+.content-view {
+  margin-top: 24px;
+  border: 1px solid var(--terminal-border);
+  padding: 12px 16px;
+}
+
+.content-view summary {
+  cursor: pointer;
+  color: var(--terminal-brass);
+  font-family: var(--terminal-serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.content-view-article {
+  margin-top: 16px;
+  border-top: 1px solid var(--terminal-border-thin);
+  padding-top: 12px;
+}
+
+.content-view-article h3 {
+  margin: 0 0 8px;
+  color: var(--terminal-text);
+  font-size: 17px;
+  letter-spacing: 0.04em;
+}
+
+.content-view-card {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.content-view-card dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  width: 100%;
+  color: var(--terminal-dim);
+  font-size: 13px;
+}
+
+.content-view-card dt::after {
+  content: ":";
+}
+
+.content-view-card dd {
+  margin: 0;
+  color: var(--terminal-text);
 }
 
 .dialog-content {

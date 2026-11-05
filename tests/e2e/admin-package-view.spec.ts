@@ -47,4 +47,44 @@ test.describe('admin package view', () => {
     await page.goto(`/admin/packages/${packageId}`)
     await expect(page.getByText('В пакете нет изменений.')).toBeVisible()
   })
+
+  test('draft and published packages render article content in the preview section', async ({ page }) => {
+    await login(page)
+    const packageId = await createPackageViaApi(page, { title: 'Пакет материалов', receivedDate: '2099-01-01' })
+    await page.request.post(`/api/admin/packages/${packageId}/changes`, {
+      data: {
+        expectedPackageRevision: 0,
+        kind: 'category',
+        payload: { name: 'Категория материалов', parentId: null, order: 1 },
+      },
+    })
+    const detail = (await (await page.request.get(`/api/admin/packages/${packageId}`)).json()) as {
+      changes: Array<{ entityId: string; kind: string }>
+    }
+    const categoryId = detail.changes.find((change) => change.kind === 'category')?.entityId ?? ''
+    await page.request.post(`/api/admin/packages/${packageId}/changes`, {
+      data: {
+        expectedPackageRevision: 1,
+        kind: 'article',
+        payload: {
+          title: 'Донесение для просмотра',
+          categoryId,
+          bodyMarkdown: '## Заголовок просмотра\n\nТекст донесения.',
+          relatedArticleIds: [],
+        },
+      },
+    })
+
+    await page.goto(`/admin/packages/${packageId}`)
+    await page.locator('.content-view summary').click()
+    const view = page.locator('.content-view')
+    await expect(view.locator('.content-view-article')).toHaveCount(1)
+    await expect(view.getByRole('heading', { name: 'Донесение для просмотра' })).toBeVisible()
+    await expect(view.getByRole('heading', { name: 'Заголовок просмотра' })).toBeVisible()
+
+    await page.request.post(`/api/admin/packages/${packageId}/publish`, { data: { expectedPackageRevision: 2 } })
+    await page.reload()
+    await page.locator('.content-view summary').click()
+    await expect(page.locator('.content-view').getByRole('heading', { name: 'Донесение для просмотра' })).toBeVisible()
+  })
 })
