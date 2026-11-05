@@ -1,6 +1,6 @@
 # 0012 — Map Scale Normalization Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** All star systems always fit inside the fixed 3D scene grid by linearly normalizing scene positions, regardless of real-world distances.
 
@@ -38,7 +38,7 @@
   - `export const MAP_FIT_RADIUS: number` — `8.5` (grid half-size 10 minus visual margin for marker radius and label).
   - `export function computeMapScale(maxDistance: number): number` — returns `MAP_FIT_RADIUS / maxDistance` when `maxDistance > 0`, otherwise `1`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -68,21 +68,21 @@ describe('computeMapScale', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `npx vitest run app/utils/map-scale.test.ts`
 Expected: FAIL — cannot resolve `./map-scale.ts`.
 
-- [ ] **Step 3: Implement `computeMapScale` in `app/utils/map-scale.ts`**
+- [x] **Step 3: Implement `computeMapScale` in `app/utils/map-scale.ts`**
 
 One function plus the constant; guard degenerate input with `if (!(maxDistance > 0)) return 1`. No other exports.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run app/utils/map-scale.test.ts`
 Expected: PASS (4/4).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/utils/map-scale.ts app/utils/map-scale.test.ts
@@ -98,25 +98,25 @@ git commit -m "feat(map): add scene scale normalization utility"
 - Consumes: `computeMapScale`, `MAP_FIT_RADIUS` from `../utils/map-scale.ts` (Task 1).
 - Produces: no new exports — component props/emits unchanged; `data-markers` dataset attribute unchanged.
 
-- [ ] **Step 1: Restructure `rebuildContent` to a two-pass build**
+- [x] **Step 1: Restructure `rebuildContent` to a two-pass build**
 
 First pass: build unscaled `Map<string, THREE.Vector3>` of system positions from `systemPosition(system)` (skip `null`s), compute `maxLength = max(position.length())` (0 when empty), then `const scale = computeMapScale(maxLength)`. Second pass: create each marker/label at `position.clone().multiplyScalar(scale)`; route lines connect scaled endpoint positions. `fitInitialCamera`, `centerOn`, `resetView`, marker radius `0.09`, and `GridHelper(20, 20)` stay exactly as they are.
 
-- [ ] **Step 2: Verify unit and type checks**
+- [x] **Step 2: Verify unit and type checks**
 
 Run: `npm run check`
 Expected: PASS (lint, typecheck, unit, build) — no e2e here.
 
-- [ ] **Step 3: Run the e2e suite**
+- [x] **Step 3: Run the e2e suite**
 
 Run: `npx playwright test`
 Expected: all pass, including unmodified `tests/e2e/map.spec.ts` (3-system scene: selection, filters, WebGL fallback).
 
-- [ ] **Step 4: Manual visual check on a dev server**
+- [x] **Step 4: Manual visual check on a dev server**
 
 Run a throwaway dev server on port 3211 against the local `.data/icarus.sqlite` DB, open `/map`, confirm: LHS 1140 sits inside the grid near radius 8.5, Sol is at the center, labels are readable, «Центрировать» and «Сбросить вид» behave as before, and the real distance (14.96 pc / 48.80 ly) still shows in the system card. Stop the server afterwards.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/components/StarScene.client.vue
@@ -129,18 +129,42 @@ git commit -m "feat(map): normalize star scene scale to fixed grid"
 - Modify: `docs/superpowers/plans/0012-2026-11-05-map-scale-normalization.md` (check off tasks, record verification)
 - Modify: `docs/superpowers/specs/0012-2026-11-05-map-scale-normalization-design.md` (status Draft → Approved/Done per repo convention)
 
-- [ ] **Step 1: Run full project checks**
+- [x] **Step 1: Run full project checks**
 
 Run: `npm run check`
 Expected: PASS. Fix any fallout from Tasks 1–2 before proceeding.
 
-- [ ] **Step 2: Update plan/spec status and record verification results and limitations**
+- [x] **Step 2: Update plan/spec status and record verification results and limitations**
 
 Note the real verification output (unit counts, e2e pass/fail, manual check outcome) and any limitations in the plan document.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/superpowers/plans/0012-2026-11-05-map-scale-normalization.md docs/superpowers/specs/0012-2026-11-05-map-scale-normalization-design.md
 git commit -m "docs: record 0012 map scale normalization verification"
 ```
+
+## Verification record (completed)
+
+- `npx vitest run app/utils/map-scale.test.ts` — 4/4 PASS (RED подтверждён до реализации).
+- `npm run check` — exit 0 (Biome clean кроме pre-existing warning `useOptionalChain` в
+  `server/domain/content.ts:85`, существует на чистом master; typecheck clean, 83 unit
+  теста, production build).
+- Full Playwright suite — 60 passed / 1 skipped / 1 failed (`access.spec.ts` admin login
+  flow — flaky: изолированный повтор 10/10 PASS, к карте отношения не имеет).
+- Manual check на dev-сервере против локальной БД (скриншоты в
+  `.superpowers/sdd/0012-2026-11-05-map-scale-normalization/`): markers=2, Sol у центра
+  сетки, LHS 1140 внутри сетки на радиусе ~8.5, подписи читаемы, «Центрировать» и
+  «Сбросить вид» работают, карточка системы показывает реальные 14.96 pc / 48.80 ly.
+  Дата кампании в локальной БД временно выставлена в 2061-03-02 и восстановлена
+  в найденное до вмешательства значение '2026-11-05'.
+- Whole-branch review (fresh reviewer): см. леджер `.superpowers/sdd/0012-…/progress.md`.
+
+## Limitations
+
+- Скейлинг линейный: при появлении систем на очень разных дистанциях (например, 0.5 пк
+  и 500 пк одновременно) ближние к Солу сольются в кучу; если такие данные появятся —
+  вернуться к вопросу нелинейного скейлинга (отклонённый вариант 2 спеки).
+- Размер сетки фиксирован (±10 единиц); при значительном росте числа систем сцену
+  может понадобиться пересматривать отдельным планом.
