@@ -6,10 +6,10 @@ test.describe('terminal font', () => {
     const family = await page.evaluate(() => getComputedStyle(document.body).fontFamily)
     expect(family).toContain('Anonymous Pro')
     await page.evaluate(async () => {
-      await document.fonts.load('16px "Anonymous Pro"', '°×«»')
+      await document.fonts.load('16px "Anonymous Pro"', 'КОРАБЛЬ °×«»')
       await document.fonts.load('700 16px "Anonymous Pro"', 'КОРАБЛЯ')
     })
-    await expect.poll(() => page.evaluate(() => document.fonts.check('16px "Anonymous Pro"', '°×«»'))).toBe(true)
+    await expect.poll(() => page.evaluate(() => document.fonts.check('16px "Anonymous Pro"', 'КОРАБЛЬ °×«»'))).toBe(true)
     await expect.poll(() => page.evaluate(() => document.fonts.check('700 16px "Anonymous Pro"', 'КОРАБЛЯ'))).toBe(true)
   })
 
