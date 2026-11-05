@@ -1,10 +1,6 @@
 import type { ChangeOperation, EntityKind } from '~~/shared/types'
 
-export function changeHref(change: {
-  kind: EntityKind
-  operation: ChangeOperation
-  entityId: string
-}): string | null {
+export function changeHref(change: { kind: EntityKind; operation: ChangeOperation; entityId: string }): string | null {
   if (change.operation !== 'upsert') return null
   switch (change.kind) {
     case 'article':
