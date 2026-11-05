@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import type { MapRouteDto, MapSystemDto } from '../../server/domain/public-dto.ts'
 import { equatorialToCartesian } from '../utils/celestial.ts'
 import { systemHasCoordinates } from '../utils/map-filter.ts'
+import { computeMapScale } from '../utils/map-scale.ts'
 import { routeStatusColor, SELECTED_COLOR, worldClassColor } from '../utils/map-style.ts'
 import { disposeObjectTree } from '../utils/three-dispose.ts'
 
@@ -77,9 +78,24 @@ function rebuildContent() {
   threeScene.add(contentGroup)
   markers.clear()
 
-  const labelGroup = new THREE.Group()
+  const unscaledPositions = new Map<string, THREE.Vector3>()
   for (const system of props.systems) {
     const position = systemPosition(system)
+    if (position) unscaledPositions.set(system.id, position)
+  }
+  let maxLength = 0
+  for (const position of unscaledPositions.values()) {
+    maxLength = Math.max(maxLength, position.length())
+  }
+  const scale = computeMapScale(maxLength)
+  const positionsById = new Map<string, THREE.Vector3>()
+  for (const [id, position] of unscaledPositions) {
+    positionsById.set(id, position.multiplyScalar(scale))
+  }
+
+  const labelGroup = new THREE.Group()
+  for (const system of props.systems) {
+    const position = positionsById.get(system.id)
     if (!position) continue
     const marker = new THREE.Mesh(
       new THREE.SphereGeometry(0.09, 16, 16),
@@ -96,8 +112,6 @@ function rebuildContent() {
   contentGroup.add(labelGroup)
 
   if (props.showRoutes) {
-    const positionsById = new Map<string, THREE.Vector3>()
-    for (const [id, marker] of markers) positionsById.set(id, marker.position)
     for (const route of props.routes) {
       const from = positionsById.get(route.fromSystemId)
       const to = positionsById.get(route.toSystemId)
