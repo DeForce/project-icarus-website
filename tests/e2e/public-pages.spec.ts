@@ -111,6 +111,31 @@ test.describe('public terminal pages', () => {
     await expect(page.getByRole('heading', { name: 'Изменения' })).toBeVisible()
   })
 
+  test('package detail links changes to archive and map by kind', async ({ page }) => {
+    const journal = (await (await page.request.get('/api/public/packages')).json()) as Array<{ id: string }>
+    const [first] = journal
+    const detail = (await (await page.request.get(`/api/public/packages/${first.id}`)).json()) as {
+      changes: Array<{ kind: string; operation: string; entityId: string }>
+    }
+    const upserts = detail.changes.filter((change) => change.operation === 'upsert')
+
+    await page.goto(`/packages/${first.id}`)
+    const links = page.locator('.change-list a')
+    await expect(links).toHaveCount(upserts.length)
+
+    const byKind = (kind: string) => upserts.find((change) => change.kind === kind)
+    const article = byKind('article')
+    const system = byKind('system')
+    const category = byKind('category')
+    const route = byKind('route')
+    expect(article).toBeDefined()
+    expect(system).toBeDefined()
+    if (article) await expect(page.locator(`.change-list a[href="/archive/${article.entityId}"]`)).toBeVisible()
+    if (system) await expect(page.locator(`.change-list a[href="/map?system=${system.entityId}"]`)).toBeVisible()
+    if (category) await expect(page.locator('.change-list a[href="/archive"]').first()).toBeVisible()
+    if (route) await expect(page.locator('.change-list a[href="/map"]').first()).toBeVisible()
+  })
+
   test('crew login page is reachable but shows the unavailable notice', async ({ page }) => {
     await page.goto('/login')
     await expect(page.getByRole('heading', { name: 'Вход экипажа' })).toBeVisible()

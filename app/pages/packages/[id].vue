@@ -1,9 +1,16 @@
 <script setup lang="ts">
+import { changeHref } from '~/utils/package-change-link'
+
 const { t } = useI18n()
 const route = useRoute()
 
 const { data, error } = useFetch(() => `/api/public/packages/${route.params.id}`, {
   default: () => null,
+})
+
+const changeLinks = computed(() => {
+  const changes = data.value?.changes ?? []
+  return changes.map((change) => ({ change, href: changeHref(change) }))
 })
 </script>
 
@@ -16,9 +23,10 @@ const { data, error } = useFetch(() => `/api/public/packages/${route.params.id}`
       <h2>{{ t('packages.changes') }}</h2>
       <p v-if="data.changes.length === 0" class="terminal-dim">{{ t('packages.changesEmpty') }}</p>
       <ul v-else class="change-list">
-        <li v-for="change in data.changes" :key="change.entityId">
+        <li v-for="{ change, href } in changeLinks" :key="change.entityId">
           <span class="terminal-dim">[{{ t(`packages.operation.${change.operation}`) }}]</span>
-          {{ change.name }}
+          <NuxtLink v-if="href !== null" :to="href">{{ change.name }}</NuxtLink>
+          <span v-else>{{ change.name }}</span>
         </li>
       </ul>
       <NuxtLink class="terminal-button" to="/packages">{{ t('packages.heading') }}</NuxtLink>
